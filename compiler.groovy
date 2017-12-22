@@ -1,44 +1,67 @@
+// https://mvnrepository.com/artifact/commons-lang/commons-lang
+@Grapes(
+    @Grab(group='commons-lang', module='commons-lang', version='2.6')
+)
+
+
 import groovy.util.XmlSlurper
 import groovy.xml.MarkupBuilder
 import java.io.StringWriter
 import groovy.util.IndentPrinter
-
+import org.apache.commons.lang.StringEscapeUtils
+import groovy.json.JsonSlurper
 
 
 def compile(file, data){
+  data = data instanceof String ? new JsonSlurper().parseText(data) : data
   def writer = new StringWriter()
   def printer = new IndentPrinter(writer, "    ")
   def template = new XmlParser().parseText(file)
+  def containsComments = file.contains("<!--")
   def tag = template."@data-tagname"
   def children = template.'*'
+  def removeEmptyLines = {s -> s.replaceAll(/\n\s*\n/, "\n")}
+  def paramExp = /\{\{(\w*)}\}/
+  def extractVariables = {s -> (s =~ (paramExp)).collect { it[1]} }
+  def escapeHtml = { StringEscapeUtils.escapeHtml(it) }
+
   def buildComponent
-  buildComponent = { mbp, child ->
-    if (child.'*'[0] instanceof groovy.util.Node){
-      mbp."${child.name()}"{
+  buildComponent = { mb, child ->
+    if (child instanceof String){
+      def str = child.replaceAll(paramExp, {p ->
+        def paramName = extractVariables(p)[0]
+          def value = data[paramName]
+          escapeHtml(value)
+      })
+      mb.mkp.yieldUnescaped(str)
+    } else if (child.'*'[0] instanceof groovy.util.Node){
+      mb."${child.name()}"{
         child.children().collect {child2 ->
-          buildComponent(mbp, child2)
+          buildComponent(mb, child2)
         }
       }
     } else {
-      mbp."${child.name()}"(child.text()){}
+      mb."${child.name()}"(removeEmptyLines(child.text())){}
     }
-
-
   }
 
-  def mbp = new MarkupBuilder(printer)
-  mbp."$tag"('') {
+  def mb = new MarkupBuilder(printer)
+  mb."$tag"('') {
    children.collect { child ->
-      buildComponent(mbp, child)
+      buildComponent(mb, child)
    }
 }
- writer.toString().trim()
+
+ def html = writer.toString().trim()
+ containsComments ? "<!DOCTYPE html>\n$html" : html
 }
 def ifThenElse = {pred, ifBranch, elseBranch ->}
 def tests = [
    "0001-empty-template",
    "0002-flat-children",
-   "0003-nested-children"
+   "0003-nested-children",
+   "0004-html-comments",
+   "0101-escape-text"
 ]
 .collect {
   [
@@ -60,3 +83,6 @@ def tests = [
 
 
 }
+
+// Hello, &lt;script&gt;alert(&quot;TEST&quot;);&lt;/script&gt;!
+// Hello, &lt;script&gt;alert("TEST");&lt;/script&gt;!
