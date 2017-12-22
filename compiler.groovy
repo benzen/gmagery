@@ -24,28 +24,37 @@ def compile(file, data){
   def paramExp = /\{\{(\w*)}\}/
   def extractVariables = {s -> (s =~ (paramExp)).collect { it[1]} }
   def escapeHtml = { StringEscapeUtils.escapeHtml(it) }
+  def compileStrWithData = { str, localData ->
+    str.replaceAll(paramExp, {p ->
+      def paramName = extractVariables(p)[0]
+        def value = localData[paramName]
+        escapeHtml(value)
+    })
+  }
 
   def buildComponent
   buildComponent = { mb, child ->
     if (child instanceof String){
-      def str = child.replaceAll(paramExp, {p ->
-        def paramName = extractVariables(p)[0]
-          def value = data[paramName]
-          escapeHtml(value)
-      })
+      def str = compileStrWithData(child, data)
       mb.mkp.yieldUnescaped(str)
     } else if (child.'*'[0] instanceof groovy.util.Node){
+
       mb."${child.name()}"{
         child.children().collect {child2 ->
           buildComponent(mb, child2)
         }
       }
-    } else {
-      mb."${child.name()}"(removeEmptyLines(child.text())){}
+    } else { //child is a groovy.util.Node but without children
+      def escapedAttributes = child.attributes().collectEntries {
+        [it.key, compileStrWithData(it.value, data)]
+      }
+      mb."${child.name()}"(removeEmptyLines(child.text()), escapedAttributes){}
     }
   }
 
   def mb = new MarkupBuilder(printer)
+  mb.escapeAttributes = false
+  mb.doubleQuotes = true
   mb."$tag"('') {
    children.collect { child ->
       buildComponent(mb, child)
@@ -61,7 +70,10 @@ def tests = [
    "0002-flat-children",
    "0003-nested-children",
    "0004-html-comments",
-   "0101-escape-text"
+   "0101-escape-text",
+   "0102-escape-attribute",
+   "0103-existing-nested-property",
+
 ]
 .collect {
   [
