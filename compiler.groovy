@@ -1,29 +1,37 @@
 @Grapes(
-    @Grab(group='commons-lang', module='commons-lang', version='2.6')
+    [@Grab(group='commons-lang', module='commons-lang', version='2.6'),
+    @Grab(group='org.jsoup', module='jsoup', version='1.11.2')]
 )
 
 
-import groovy.util.XmlSlurper
+// import groovy.util.XmlSlurper
 import groovy.xml.MarkupBuilder
 import java.io.StringWriter
 import groovy.util.IndentPrinter
 import org.apache.commons.lang.StringEscapeUtils
 import groovy.json.JsonSlurper
+import org.jsoup.Jsoup
 
 class Compiler{
   def static  compile(file, data){
     data = data instanceof String ? new JsonSlurper().parseText(data) : data
     def writer = new StringWriter()
     def printer = new IndentPrinter(writer, "    ", true, false)
-    def template = new XmlParser().parseText(file)
+
+    // def template = new XmlParser().parseText(file)
+    def template = Jsoup.parseBodyFragment(file)
     def containsComments = file.contains("<!--")
-    def tag = template."@data-tagname"
-    def children = template.'*'
+    def rootTag = template.getElementsByAttribute("data-tagname").first()
+    def tag = rootTag.attributes().get("data-tagname")
+
+    def children = rootTag.childNodes()
+
     def removeEmptyLines = {s -> s.replaceAll(/\n\s*\n/, "\n")}
     def paramExp = /\{\{\s*(\w*[.\w*]*)\s*\}\}/
     def extractVariables = {s -> (s =~ (paramExp)).collect { it[1]} }
     def escapeHtml = { StringEscapeUtils.escapeHtml("$it") }
-    def attributesToFilter = ["data-if", "data-unless", "data-each"]
+    def attributesToFilter = ["data-if", "data-unless", "data-each", "data-key", "onclick"]
+    def booleanAttributes = ["allowfullscreen", "async", "autofocus", "autoplay", "capture", "checked", "controls", "default", "defer", "disabled", "formnovalidate", "hidden", "itemscope", "loop", "multiple", "muted", "novalidate", "open", "readonly", "required", "reversed", "selected"]
     def stringifyObject
     stringifyObject = { result, fetchingLengthOfArray = false ->
       if(result == null) {
@@ -53,10 +61,9 @@ class Compiler{
       }
 
     }
-    def alwaysAutoCLosingElements = [ "area",  "base",  "br",  "col",  "command",  "embed",  "hr",  "img",  "input",  "keygen",  "link",  "menuitem",  "meta",  "param",  "source",  "track",  "wbr"]
 
     def compileStrWithData = { str, localData ->
-      str.replaceAll(paramExp, {p ->
+      str?.replaceAll(paramExp, {p ->
         def paramName = extractVariables(p)[0]
         escapeHtml(getProperty(localData, paramName))
       })
@@ -64,26 +71,41 @@ class Compiler{
 
     def escapeAttributes = { child ->
       child.attributes().collectEntries {
-        [it.key, compileStrWithData(it.value, data)]
+        def value = compileStrWithData(it.value, data)
+        if(booleanAttributes.contains(it.key) && value == null){
+          [it.key, "true"]
+        } else {
+          [it.key, value]
+        }
+
+      }.findAll {
+        !(booleanAttributes.contains(it.key) && ["", "false"].contains(it.value))
       }
     }
-
+    def containsIf = { escapedAttributes -> escapedAttributes?.find({ it.key == "data-if" }) }
+    def containsUnless = { escapedAttributes -> escapedAttributes?.find({ it.key == "data-unless" })}
+    def extractIfValue = { escapedAttributes, model ->
+      def ifAttr = containsIf(escapedAttributes)
+      getProperty(model, ifAttr?.value)
+    }
+    def extractUnlessValue = {escapedAttributes, model ->
+      def unlessAttr = containsUnless(escapedAttributes)
+      getProperty(model, unlessAttr?.value)
+    }
     def buildComponent
     buildComponent = { mb, child, model ->
 
-      if (child instanceof String){
-        def str = compileStrWithData(child, model)
-
+      if(child instanceof org.jsoup.nodes.Comment){
+        mb.mkp.yield("")
+      }else if (child instanceof org.jsoup.nodes.TextNode){
+        def str = compileStrWithData(child.text(), model)
         mb.mkp.yieldUnescaped(removeEmptyLines(str))
       } else {
         def escapedAttributes = escapeAttributes(child)
         def eachAttr =  escapedAttributes?.find({ it.key == "data-each" })
 
-        def ifAttr = escapedAttributes?.find({ it.key == "data-if" })
-        def ifAttrValue = getProperty(model, ifAttr?.value)
-
-        def unlessAttr = escapedAttributes?.find({ it.key == "data-unless" })
-        def unlessAttrValue = getProperty(model, unlessAttr?.value)
+        def ifAttr = containsIf(escapedAttributes)
+        def unlessAttr = containsUnless(escapedAttributes)
 
         def filteredAttributes = escapedAttributes.findAll({ !attributesToFilter.contains(it.key)})
 
@@ -93,22 +115,30 @@ class Compiler{
           def iterVar = (eachAttrValue =~ /(\w*) in \w*[\.\w*]*/)[0][1]
 
           def list = getProperty(model, listPath, false)
-
-          list.collect {
-            if((ifAttr == null|| ifAttrValue) && (unlessAttr == null || !unlessAttrValue)){
+          if (list instanceof List) {
+            list.collect {
               def localModel =  model + [:]
               localModel.put(iterVar, it)
-              mb."${child.name()}"(filteredAttributes){
-                child.children().collect {child2 ->
-                  buildComponent(mb, child2, localModel)
+
+              def ifAttrValue = extractIfValue(escapedAttributes, localModel)
+              def unlessAttrValue = extractUnlessValue(escapedAttributes, localModel)
+
+              if((ifAttr == null|| ifAttrValue) && (unlessAttr == null || !unlessAttrValue)){
+                mb."${child.tagName()}"(filteredAttributes){
+                  child.childNodes().collect {child2 ->
+                    buildComponent(mb, child2, localModel)
+                  }
                 }
               }
             }
           }
+
         } else {
+          def ifAttrValue = extractIfValue(escapedAttributes, model)
+          def unlessAttrValue = extractUnlessValue(escapedAttributes, model)
           if((ifAttr == null|| ifAttrValue) && (unlessAttr == null || !unlessAttrValue)){
-            mb."${child.name()}"(filteredAttributes){
-              child.children().collect {child2 ->
+            mb."${child.tagName()}"(filteredAttributes){
+              child.childNodes().collect {child2 ->
                 buildComponent(mb, child2, model)
               }
             }
@@ -120,6 +150,7 @@ class Compiler{
     def mb = new MarkupBuilder(printer)
     mb.escapeAttributes = false
     mb.doubleQuotes = true
+
     mb."$tag"('') {
      children.collect { child ->
         buildComponent(mb, child, data)

@@ -1,9 +1,14 @@
+@Grab(group='org.jsoup', module='jsoup', version='1.11.2')
 
 import Compiler
+import org.jsoup.Jsoup
 
 def normalizeXmlString = { str ->
-
-  new XmlSlurper(false, false, true).parseText(str).toString()
+  def doc = Jsoup.parseBodyFragment(str)
+  doc.normalise()
+  // println  doc.class
+  // os.prettyPrint(true)
+  doc.body().children().first().toString()
 }
 def tests = [
    "0001-empty-template",
@@ -38,7 +43,35 @@ def tests = [
    "0304-data-unless-zero",
    "0305-data-unless-empty-string",
    "0306-data-unless-empty-array",
-   "0401-data-each"
+   "0401-data-each",
+   "0402-data-each-access-outer-context",
+   "0403-data-each-preseves-outer-context",
+   "0404-data-each-with-keys",
+   "0405-data-each-non-list",
+   "0406-data-each-before-data-if",
+   "0407-data-each-before-data-unless",
+   "0501-do-not-render-event-attributes",
+   "0601-boolean-property-allowfullscreen",
+   "0602-boolean-property-async",
+   "0603-boolean-property-autofocus",
+   "0604-boolean-property-autoplay",
+   "0605-boolean-property-capture",
+   "0606-boolean-property-checked",
+   // "0608-boolean-property-default",
+   "0609-boolean-property-defer",
+   "0610-boolean-property-disabled",
+   "0611-boolean-property-formnovalidate",
+   "0612-boolean-property-hidden",
+   "0613-boolean-property-itemscope",
+   "0614-boolean-property-loop",
+   "0615-boolean-property-multiple",
+   "0616-boolean-property-muted",
+   "0617-boolean-property-novalidate",
+   "0618-boolean-property-open",
+   "0619-boolean-property-readonly",
+   "0620-boolean-property-required",
+   "0621-boolean-property-reversed",
+   "0622-boolean-property-selected",
 ]
 .collect {
   [
@@ -51,10 +84,11 @@ def tests = [
 .each {
     println "Testing $it.test"
 
-    def compiledTemplate =  Compiler.compile(it.template, it.data)
-    def expected = it.expected
+    def compiledTemplate =  normalizeXmlString Compiler.compile(it.template, it.data)
+    def expected = normalizeXmlString it.expected
 
-    assert  compiledTemplate ==  expected
+
+    assert  expected == compiledTemplate
 
 
 }
