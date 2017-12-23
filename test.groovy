@@ -56,4 +56,5 @@ def tests = [
 
     assert  compiledTemplate ==  expected
 
+
 }

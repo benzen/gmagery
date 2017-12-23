@@ -40,13 +40,18 @@ class Compiler{
         result
       }
     }
-    def getProperty = {object, String property ->
+    def getProperty = {object, String property, escape = true ->
       if(property == null) { return null }
       def fetchingLengthOfArray = property.endsWith(".length")
       def cleanedProperty = property.trim().replaceAll(/\.length$/,"")
       def result = cleanedProperty.tokenize('.').inject(object, {obj, prop -> obj?."$prop" })
 
-      stringifyObject(result, fetchingLengthOfArray)
+      if(escape){
+        stringifyObject(result, fetchingLengthOfArray)
+      } else {
+        result
+      }
+
     }
     def alwaysAutoCLosingElements = [ "area",  "base",  "br",  "col",  "command",  "embed",  "hr",  "img",  "input",  "keygen",  "link",  "menuitem",  "meta",  "param",  "source",  "track",  "wbr"]
 
@@ -64,40 +69,48 @@ class Compiler{
     }
 
     def buildComponent
-    buildComponent = { mb, child ->
+    buildComponent = { mb, child, model ->
 
       if (child instanceof String){
-        def str = compileStrWithData(child, data)
+        def str = compileStrWithData(child, model)
         mb.mkp.yieldUnescaped(str)
       } else if (child.'*'[0] instanceof groovy.util.Node){
         def escapedAttributes = escapeAttributes(child)
-
+        def filteredAttributes = escapedAttributes.findAll({ !attributesToFilter.contains(it.key)})
         def eachAttr =  escapedAttributes?.find({ it.key == "data-each" })
-        // println eachAttr
-        // if(eachAttr){
-        //   def eachAttrValue = eachAttr?.value
-        //   def listPath = eachAttrValue =~ /\w* in (\w*[\.\w*]*)/
-        //   def iterVar = eachAttrValue =~ /(\w*) in \w*[\.\w*]*/
-        //
-        //   println eachAttrValue
-        //   println listPath?.size() ? listPath[0][1] : null
-        //   println listPath?.size() ? iterVar[0][1] : null
-        //
-        // }
 
-        mb."${child.name()}"{
-          child.children().collect {child2 ->
-            buildComponent(mb, child2)
+        if(eachAttr){
+          def eachAttrValue = eachAttr?.value
+          def listPath = (eachAttrValue =~ /\w* in (\w*[\.\w*]*)/)[0][1]
+          def iterVar = (eachAttrValue =~ /(\w*) in \w*[\.\w*]*/)[0][1]
+
+          def list = getProperty(model, listPath, false)
+
+          list.collect {
+            def localModel =  model + [:]
+            localModel.put(iterVar, it)
+            mb."${child.name()}"(filteredAttributes){
+              child.children().collect {child2 ->
+                buildComponent(mb, child2, localModel)
+              }
+            }
+          }
+        } else {
+          mb."${child.name()}"(filteredAttributes){
+            child.children().collect {child2 ->
+              buildComponent(mb, child2, model)
+            }
           }
         }
+
+
       } else { //child is a groovy.util.Node but without children
         def escapedAttributes = escapeAttributes(child)
-        // println escapedAttributes
         def ifAttr = escapedAttributes?.find({ it.key == "data-if" })
-        def ifAttrValue = getProperty(data, ifAttr?.value)
+        def ifAttrValue = getProperty(model, ifAttr?.value)
 
         def unlessAttr = escapedAttributes?.find({ it.key == "data-unless" })
-        def unlessAttrValue = getProperty(data, unlessAttr?.value)
+        def unlessAttrValue = getProperty(model, unlessAttr?.value)
 
         def filteredAttributes = escapedAttributes.findAll({ !attributesToFilter.contains(it.key)})
 
@@ -105,7 +118,7 @@ class Compiler{
           if(alwaysAutoCLosingElements.contains(child.name())){
             mb."${child.name()}"(filteredAttributes){}
           } else {
-            mb."${child.name()}"(removeEmptyLines(compileStrWithData(child.text(), data)), filteredAttributes){}
+            mb."${child.name()}"(removeEmptyLines(compileStrWithData(child.text(), model)), filteredAttributes){}
           }
         }
 
@@ -118,7 +131,7 @@ class Compiler{
     mb.doubleQuotes = true
     mb."$tag"('') {
      children.collect { child ->
-        buildComponent(mb, child)
+        buildComponent(mb, child, data)
      }
   }
 
