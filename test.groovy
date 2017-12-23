@@ -36,7 +36,7 @@ def tests = [
    "0204-data-if-zero",
    "0205-data-if-empty-string",
    "0206-data-if-empty-array",
-   // "0207-underscore-variable-in-data-if",
+   "0207-underscore-variable-in-data-if",
    "0301-data-unless-true",
    "0302-data-unless-false",
    "0303-data-unless-undefined",
