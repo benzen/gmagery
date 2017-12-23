@@ -73,11 +73,19 @@ class Compiler{
 
       if (child instanceof String){
         def str = compileStrWithData(child, model)
-        mb.mkp.yieldUnescaped(str)
-      } else if (child.'*'[0] instanceof groovy.util.Node){
+
+        mb.mkp.yieldUnescaped(removeEmptyLines(str))
+      } else {
         def escapedAttributes = escapeAttributes(child)
-        def filteredAttributes = escapedAttributes.findAll({ !attributesToFilter.contains(it.key)})
         def eachAttr =  escapedAttributes?.find({ it.key == "data-each" })
+
+        def ifAttr = escapedAttributes?.find({ it.key == "data-if" })
+        def ifAttrValue = getProperty(model, ifAttr?.value)
+
+        def unlessAttr = escapedAttributes?.find({ it.key == "data-unless" })
+        def unlessAttrValue = getProperty(model, unlessAttr?.value)
+
+        def filteredAttributes = escapedAttributes.findAll({ !attributesToFilter.contains(it.key)})
 
         if(eachAttr){
           def eachAttrValue = eachAttr?.value
@@ -87,42 +95,25 @@ class Compiler{
           def list = getProperty(model, listPath, false)
 
           list.collect {
-            def localModel =  model + [:]
-            localModel.put(iterVar, it)
-            mb."${child.name()}"(filteredAttributes){
-              child.children().collect {child2 ->
-                buildComponent(mb, child2, localModel)
+            if((ifAttr == null|| ifAttrValue) && (unlessAttr == null || !unlessAttrValue)){
+              def localModel =  model + [:]
+              localModel.put(iterVar, it)
+              mb."${child.name()}"(filteredAttributes){
+                child.children().collect {child2 ->
+                  buildComponent(mb, child2, localModel)
+                }
               }
             }
           }
         } else {
-          mb."${child.name()}"(filteredAttributes){
-            child.children().collect {child2 ->
-              buildComponent(mb, child2, model)
+          if((ifAttr == null|| ifAttrValue) && (unlessAttr == null || !unlessAttrValue)){
+            mb."${child.name()}"(filteredAttributes){
+              child.children().collect {child2 ->
+                buildComponent(mb, child2, model)
+              }
             }
           }
         }
-
-
-      } else { //child is a groovy.util.Node but without children
-        def escapedAttributes = escapeAttributes(child)
-        def ifAttr = escapedAttributes?.find({ it.key == "data-if" })
-        def ifAttrValue = getProperty(model, ifAttr?.value)
-
-        def unlessAttr = escapedAttributes?.find({ it.key == "data-unless" })
-        def unlessAttrValue = getProperty(model, unlessAttr?.value)
-
-        def filteredAttributes = escapedAttributes.findAll({ !attributesToFilter.contains(it.key)})
-
-        if((ifAttr == null|| ifAttrValue) && (unlessAttr == null || !unlessAttrValue)){
-          if(alwaysAutoCLosingElements.contains(child.name())){
-            mb."${child.name()}"(filteredAttributes){}
-          } else {
-            mb."${child.name()}"(removeEmptyLines(compileStrWithData(child.text(), model)), filteredAttributes){}
-          }
-        }
-
-
       }
     }
 
