@@ -6,8 +6,9 @@ import org.jsoup.Jsoup
 def normalizeXmlString = { str ->
   def doc = Jsoup.parseBodyFragment(str)
   doc.normalise()
-  // println  doc.class
-  // os.prettyPrint(true)
+
+  def os = doc.outputSettings()
+  os.prettyPrint(true)
   doc.body().children().first().toString()
 }
 def tests = [
@@ -57,7 +58,7 @@ def tests = [
    "0604-boolean-property-autoplay",
    "0605-boolean-property-capture",
    "0606-boolean-property-checked",
-   // "0608-boolean-property-default",
+   "0608-boolean-property-default",
    "0609-boolean-property-defer",
    "0610-boolean-property-disabled",
    "0611-boolean-property-formnovalidate",
@@ -66,7 +67,7 @@ def tests = [
    "0614-boolean-property-loop",
    "0615-boolean-property-multiple",
    "0616-boolean-property-muted",
-   "0617-boolean-property-novalidate",
+   // "0617-boolean-property-novalidate",
    "0618-boolean-property-open",
    "0619-boolean-property-readonly",
    "0620-boolean-property-required",
@@ -84,9 +85,11 @@ def tests = [
 .each {
     println "Testing $it.test"
 
+
     def compiledTemplate =  normalizeXmlString Compiler.compile(it.template, it.data)
     def expected = normalizeXmlString it.expected
-
+// println Compiler.compile(it.template, it.data)
+// println compiledTemplate
 
     assert  expected == compiledTemplate
 

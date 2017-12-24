@@ -31,7 +31,9 @@ class Compiler{
     def extractVariables = {s -> (s =~ (paramExp)).collect { it[1]} }
     def escapeHtml = { StringEscapeUtils.escapeHtml("$it") }
     def attributesToFilter = ["data-if", "data-unless", "data-each", "data-key", "onclick"]
-    def booleanAttributes = ["allowfullscreen", "async", "autofocus", "autoplay", "capture", "checked", "controls", "default", "defer", "disabled", "formnovalidate", "hidden", "itemscope", "loop", "multiple", "muted", "novalidate", "open", "readonly", "required", "reversed", "selected"]
+    def booleanAttributes = [
+      "allowfullscreen", "async", "autofocus", "autoplay", "capture", "checked", "controls", "default", "defer", "disabled", "formnovalidate",
+      "hidden", "itemscope", "loop", "multiple", "muted", "novalidate", "open", "readonly", "required", "reversed", "selected"]
     def stringifyObject
     stringifyObject = { result, fetchingLengthOfArray = false ->
       if(result == null) {
