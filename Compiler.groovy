@@ -12,11 +12,14 @@ import org.jsoup.Jsoup
 import AST.Raw
 import AST.Variable
 import AST.Template
+import AST.If
+import AST.Unless
+import AST.Each
 import org.apache.commons.lang.StringEscapeUtils
 
 
 class Compiler{
-  def static ignoredAttributes = ["data-tagname"]
+  def static ignoredAttributes = ["data-tagname", "data-if", "data-unless", "data-each", "data-key"]
 
   def static compileNode(node, output, queue, isRoot){
     if(node instanceof org.jsoup.nodes.TextNode){
@@ -36,28 +39,8 @@ class Compiler{
 
   }
 
-  // def static compileVariables(str, output){
-  //   def paramExp = /(.*)\{\{|(.*)\}\}|(.*)/
-  //   def parts = str =~ paramExp
-  //   parts.each { match ->
-  //     def beforeVar = match[1]
-  //     def inVar = match[2]
-  //     def outsideVar = match[3]
-  //     if(beforeVar) {
-  //       println "beforeVar $beforeVar"
-  //       output.push(new Raw(StringEscapeUtils.escapeHtml(beforeVar.replace("{{", ""))))
-  //     } else if(outsideVar){
-  //       println "outsideVar $outsideVar"
-  //       output.push(new Raw(StringEscapeUtils.escapeHtml(outsideVar)))
-  //     } else if (inVar){
-  //       println "inVar $inVar"
-  //       output.push(new Variable(inVar.replaceAll("}}", "").trim().tokenize(".")))
-  //     }
-  //   }
-  // }
   //XXX This may not be the best way to do this
   def static compileVariables(str, output){
-    // def str = "abc {{def}} {{xml}}!"
 
         def start = 0
         def end = 0
@@ -80,37 +63,6 @@ class Compiler{
             start = end
 
         }
-    // def start = 0
-    // def end  = Math.min(start + 2, str.size() )
-    // def isText = true
-    // def buffer = ""
-    // // def bufferWasFlushed = false
-    //
-    // while (start < str.size()){
-    //     println "start $start end $end"
-    //     def chunk = str.substring(start, end)
-    //     buffer = buffer + chunk
-    //     // println "chunk $chunk"
-    //     // println "buffer $buffer"
-    //     if(chunk == "{{"){
-    //         isText = false
-    //         // println "text buffer $buffer"
-    //         output.push(new Raw(StringEscapeUtils.escapeHtml(buffer.replace("{{", ""))))
-    //         buffer= ""
-    //         // bufferWasFlushed = true
-    //     } else if (chunk == "}}"){
-    //       isText = true
-    //       output.push(new Variable(buffer.replace("}}", "").tokenize(".")))
-    //       buffer= ""
-    //       // bufferWasFlushed = true
-    //     }
-    //     start = end
-    //     end = Math.min(str.size(), end + 2)
-    // }
-    // if(buffer != ""){
-    //   println "buffer fuck $buffer"
-    //   output.push(new Raw(StringEscapeUtils.escapeHtml(buffer)))
-    // }
   }
   def static compileTextNode(node, output){
     compileVariables(node.text(), output)
@@ -126,8 +78,34 @@ class Compiler{
       def isComponent = false
       tagName = node.attr("data-tagname").toLowerCase()
     }
+    if(node.hasAttr("data-each")){
+      def value = node.attr("data-each")
+      def parts = value.split(" in ")
+      def name = parts[0]
+      def path = parts[1].trim().tokenize(".")
+      def eachOutput = new Each(name, path)
+      output.push(eachOutput)
+      output = eachOutput
+    }
+    if(node.hasAttr("data-if")){
+      def value = node.attr("data-if")
+      def path = value.trim().tokenize(".")
+      def ifOutput = new If(path)
+      output.push(ifOutput)
+      output = ifOutput
+    }
+    if(node.hasAttr("data-unless")){
+      def value = node.attr("data-unless")
+      def path = value.trim().tokenize(".")
+      def unlessOutput = new Unless(path)
+      output.push(unlessOutput)
+      output = unlessOutput
+    }
     output.push(new Raw("<$tagName"))
-    node.attributes.grep({!ignoredAttributes.contains(it.key)}).each({
+    node.attributes
+    .grep({!ignoredAttributes.contains(it.key)})
+    .grep({ it.key.indexOf("on") != 0})
+    .each({
       output.push(new Raw(" ${Runtime.escapeHtml(it.key)}="))
       compileVariables(it.value, output)
     })
@@ -181,6 +159,7 @@ class Compiler{
     def binding = new Binding([templates: templates, runtime: Runtime])
     def gs = new GroovyShell(binding)
     gs.evaluate(src)
+
     templates
   }
 
