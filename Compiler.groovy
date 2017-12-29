@@ -36,21 +36,81 @@ class Compiler{
 
   }
 
+  // def static compileVariables(str, output){
+  //   def paramExp = /(.*)\{\{|(.*)\}\}|(.*)/
+  //   def parts = str =~ paramExp
+  //   parts.each { match ->
+  //     def beforeVar = match[1]
+  //     def inVar = match[2]
+  //     def outsideVar = match[3]
+  //     if(beforeVar) {
+  //       println "beforeVar $beforeVar"
+  //       output.push(new Raw(StringEscapeUtils.escapeHtml(beforeVar.replace("{{", ""))))
+  //     } else if(outsideVar){
+  //       println "outsideVar $outsideVar"
+  //       output.push(new Raw(StringEscapeUtils.escapeHtml(outsideVar)))
+  //     } else if (inVar){
+  //       println "inVar $inVar"
+  //       output.push(new Variable(inVar.replaceAll("}}", "").trim().tokenize(".")))
+  //     }
+  //   }
+  // }
+  //XXX This may not be the best way to do this
   def static compileVariables(str, output){
-    def paramExp = /(.*)\{\{|(.*)\}\}|(.*)/
-    def parts = str =~ paramExp
-    parts.each { match ->
-      def beforeVar = match[1]
-      def inVar = match[2]
-      def outsideVar = match[3]
-      if(beforeVar) {
-        output.push(new Raw(StringEscapeUtils.escapeHtml(beforeVar.replace("{{", ""))))
-      } else if(outsideVar){
-        output.push(new Raw(StringEscapeUtils.escapeHtml(outsideVar)))
-      } else if (inVar){
-        output.push(new Variable(inVar.replace("}}", "").trim().tokenize(".")))
-      }
-    }
+    // def str = "abc {{def}} {{xml}}!"
+
+        def start = 0
+        def end = 0
+        def isText = true
+        def chunk = ""
+        while (start < str.size()){
+
+            if(isText){
+                end = str.indexOf("{{", start)
+                end = end == -1 ? str.size() : end
+                chunk = str.substring(start, end).replace("}}", "")
+                output.push(new Raw(StringEscapeUtils.escapeHtml(chunk)))
+            }else {
+                end = str.indexOf("}}", start)
+                end = end == -1 ? str.size() : end
+                chunk = str.substring(start, end).replace("{{", "")
+                output.push(new Variable(chunk.trim().tokenize(".")))
+            }
+            isText = !isText
+            start = end
+
+        }
+    // def start = 0
+    // def end  = Math.min(start + 2, str.size() )
+    // def isText = true
+    // def buffer = ""
+    // // def bufferWasFlushed = false
+    //
+    // while (start < str.size()){
+    //     println "start $start end $end"
+    //     def chunk = str.substring(start, end)
+    //     buffer = buffer + chunk
+    //     // println "chunk $chunk"
+    //     // println "buffer $buffer"
+    //     if(chunk == "{{"){
+    //         isText = false
+    //         // println "text buffer $buffer"
+    //         output.push(new Raw(StringEscapeUtils.escapeHtml(buffer.replace("{{", ""))))
+    //         buffer= ""
+    //         // bufferWasFlushed = true
+    //     } else if (chunk == "}}"){
+    //       isText = true
+    //       output.push(new Variable(buffer.replace("}}", "").tokenize(".")))
+    //       buffer= ""
+    //       // bufferWasFlushed = true
+    //     }
+    //     start = end
+    //     end = Math.min(str.size(), end + 2)
+    // }
+    // if(buffer != ""){
+    //   println "buffer fuck $buffer"
+    //   output.push(new Raw(StringEscapeUtils.escapeHtml(buffer)))
+    // }
   }
   def static compileTextNode(node, output){
     compileVariables(node.text(), output)
@@ -68,7 +128,8 @@ class Compiler{
     }
     output.push(new Raw("<$tagName"))
     node.attributes.grep({!ignoredAttributes.contains(it.key)}).each({
-      output.push(new Raw(" $it.key=\"$it.value\""))
+      output.push(new Raw(" ${Runtime.escapeHtml(it.key)}="))
+      compileVariables(it.value, output)
     })
     output.push(new Raw(">"))
     node.childNodes().each {

@@ -8,4 +8,8 @@ public class Raw {
   String toString(){
     text
   }
+
+  String toGroovy(results){
+    results.push("output.push('$text')\n")
+  }
 }

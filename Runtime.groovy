@@ -13,19 +13,22 @@ class Runtime {
     output.join('').toString()
   }
   def static escapeHtml(str){
-    def r = StringEscapeUtils.escapeHtml(str)
-    println r
-    r
+    StringEscapeUtils.escapeHtml(str)
   }
   def static toString(thing){
-    println "stringify $thing"
-      "$thing"
+    if(thing == null ) return ""
+    if(thing instanceof Map){ return "[object Object]"}
+    if(thing instanceof List){ return thing.join(',')}
+    "$thing"
   }
   def static lookup(data, path){
-    println "data $data path $path"
+    // println "data $data path $path"
     if(path == null) { return null }
-    def fetchingLengthOfArray = path.contains("length")
-    def cleanedProperty = path.minus("length")
-    cleanedProperty.inject(data, {obj, prop -> obj?."$prop" })
+
+    path.inject(data, {obj, prop ->
+      println "prop $prop"
+      prop == "length" ? obj.size() : obj?."$prop"
+     })
+
   }
 }
