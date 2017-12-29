@@ -18,7 +18,7 @@ class Runtime {
   def static toString(thing){
     if(thing == null ) return ""
     if(thing instanceof Map){ return "[object Object]"}
-    if(thing instanceof List){ return thing.join(',')}
+    if(thing instanceof List){ return thing.collect({toString(it)}).join(',')}
     "$thing"
   }
   def static lookup(data, path){
