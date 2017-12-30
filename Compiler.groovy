@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringEscapeUtils
 
 class Compiler{
   def static ignoredAttributes = ["data-tagname", "data-if", "data-unless", "data-each", "data-key"]
+  def static booleanAttributes = ["allowfullscreen", "async", "autofocus", "autoplay", "capture", "controls", "checked", "default", "defer", "disabled", "formnovalidate", "open", "readonly", "hidden", "itemscope", "loop", "muted", "multiple", "novalidate", "open", "required", "reversed", "selected"]
 
   def static compileNode(node, output, queue, isRoot){
     if(node instanceof org.jsoup.nodes.TextNode){
@@ -46,7 +47,7 @@ class Compiler{
         def end = 0
         def isText = true
         def chunk = ""
-        while (start < str.size()){
+        while (start < str?.size()){
 
             if(isText){
                 end = str.indexOf("{{", start)
@@ -102,12 +103,28 @@ class Compiler{
       output = unlessOutput
     }
     output.push(new Raw("<$tagName"))
-    node.attributes
+    node.attributes()
     .grep({!ignoredAttributes.contains(it.key)})
     .grep({ it.key.indexOf("on") != 0})
     .each({
-      output.push(new Raw(" ${Runtime.escapeHtml(it.key)}="))
-      compileVariables(it.value, output)
+      if(booleanAttributes.contains(it.key)){
+        if(it.value ==~ /\{\{.*\}\}/){
+          def rawPath = it.value.substring(2, it.value.size() - 2).trim()
+          if(rawPath){
+            def path = rawPath.tokenize(".")
+            def ifOutput = new If(path)
+            ifOutput.push(new Raw(" ${Runtime.escapeHtml(it.key)}"))
+            output.push(ifOutput)
+            return
+          }
+        } else {
+          output.push(new Raw(" ${Runtime.escapeHtml(it.key)}"))
+        }
+      } else {
+        output.push(new Raw(" ${Runtime.escapeHtml(it.key)}="))
+        compileVariables(it.value, output)
+      }
+
     })
     output.push(new Raw(">"))
     node.childNodes().each {

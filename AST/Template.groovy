@@ -14,10 +14,11 @@ public class Template {
     "<Template name='$name' src='$src'>"
   }
   String toGroovy(results){
-    results.push("def fn = {templates, data, output, inner, embedData ->\n")
+    def id = UUID.randomUUID().toString().replace("-","_")
+    results.push("def fn_$id = {templates, data, output, inner, embedData ->\n")
     children.each { node -> node.toGroovy(results)}
     results.push("}\n")
-    results.push("templates[\"$name\"] = [fn:fn]")
+    results.push("templates[\"$name\"] = [fn:fn_$id]\n")
   }
   def push(o){
     children.push(o)
