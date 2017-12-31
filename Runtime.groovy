@@ -3,7 +3,7 @@ import org.apache.commons.lang.StringEscapeUtils
 class Runtime {
   def static render(templates, templateName, data, output, inner= null, embedData = false){
     if(templates[templateName]){
-      templates[templateName].fn.call(templateName, data, output, inner, embedData)
+      templates[templateName].fn.call(templates, data, output, inner, embedData)
     }
   }
 

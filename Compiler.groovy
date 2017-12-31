@@ -15,6 +15,8 @@ import AST.Template
 import AST.If
 import AST.Unless
 import AST.Each
+import AST.TemplateCall
+
 import org.apache.commons.lang.StringEscapeUtils
 
 
@@ -102,7 +104,26 @@ class Compiler{
       output.push(unlessOutput)
       output = unlessOutput
     }
+
+    if(node.tagName().contains("-")){
+        def context = [:]
+        node.attributes().each {
+          if (! (ignoredAttributes.contains(it.key) || it.key.substring(0, 2) == "on" || it.key == "data-embed")){
+            context."$it.key" = []
+            compileVariables(it.value, context."$it.key")
+          }
+        }
+      def templateName = [new Raw(node.tagName().toLowerCase())]
+      def templateOutput = new TemplateCall(templateName)
+      output.push(templateOutput)
+      node.childNodes().each { childNode ->
+        compileNode(childNode, context, templateOutput, false)
+      }
+      return
+    }
+
     output.push(new Raw("<$tagName"))
+
     node.attributes()
     .grep({!ignoredAttributes.contains(it.key)})
     .grep({ it.key.indexOf("on") != 0})
@@ -176,7 +197,6 @@ class Compiler{
     def binding = new Binding([templates: templates, runtime: Runtime])
     def gs = new GroovyShell(binding)
     gs.evaluate(src)
-
     templates
   }
 

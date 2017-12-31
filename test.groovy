@@ -11,7 +11,7 @@ def normalizeXmlString = { str ->
 
   def os = doc.outputSettings()
   os.prettyPrint(true)
-  doc.body().children().first().toString().trim().replace("\n", "").replace("  ", " ")
+  doc.body().children().first().toString().trim().replace("\n", "").replace("  ", " ").replace("  ", " ")
 }
 def tests = [
    "0001-empty-template",
