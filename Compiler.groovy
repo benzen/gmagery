@@ -3,19 +3,21 @@
     @Grab(group='org.jsoup', module='jsoup', version='1.11.2')]
 )
 
+import AST.Each
+import AST.EmbeddedData
+import AST.ConditionalDataEmbed
+import AST.If
+import AST.Raw
+import AST.Template
+import AST.TemplateCall
+import AST.Unless
+import AST.Variable
+import groovy.json.JsonSlurper
+import groovy.util.IndentPrinter
 import groovy.xml.MarkupBuilder
 import java.io.StringWriter
-import groovy.util.IndentPrinter
 import org.apache.commons.lang.StringEscapeUtils
-import groovy.json.JsonSlurper
 import org.jsoup.Jsoup
-import AST.Raw
-import AST.Variable
-import AST.Template
-import AST.If
-import AST.Unless
-import AST.Each
-import AST.TemplateCall
 
 import org.apache.commons.lang.StringEscapeUtils
 
@@ -50,7 +52,6 @@ class Compiler{
         def isText = true
         def chunk = ""
         while (start < str?.size()){
-
             if(isText){
                 end = str.indexOf("{{", start)
                 end = end == -1 ? str.size() : end
@@ -72,13 +73,14 @@ class Compiler{
   }
   def static compileElement(node, output, queue, isRoot){
     def tagName = node.tagName().toLowerCase()
-
+    def isComponent = false
     if(tagName == "template"){
       if(!isRoot){
         queue.push(node)
         return
       }
-      def isComponent = false
+      isComponent = true
+
       tagName = node.attr("data-tagname").toLowerCase()
     }
     if(node.hasAttr("data-each")){
@@ -109,12 +111,15 @@ class Compiler{
         def context = [:]
         node.attributes().each {
           if (! (ignoredAttributes.contains(it.key) || it.key.substring(0, 2) == "on" || it.key == "data-embed")){
+
             context."$it.key" = []
             compileVariables(it.value, context."$it.key")
           }
         }
       def templateName = [new Raw(node.tagName().toLowerCase())]
-      def templateOutput = new TemplateCall(templateName)
+      def embedData = node.attr("data-embed") == "true"
+
+      def templateOutput = new TemplateCall(templateName, context, embedData)
       output.push(templateOutput)
       node.childNodes().each { childNode ->
         compileNode(childNode, context, templateOutput, false)
@@ -138,6 +143,10 @@ class Compiler{
             output.push(ifOutput)
             return
           }
+        } else if (it.key == "data-embed"){
+            output.push(new Raw(" data-context=\""))
+            output.push(new EmbeddedData())
+            output.push(new Raw("\""))
         } else {
           output.push(new Raw(" ${Runtime.escapeHtml(it.key)}"))
         }
@@ -145,8 +154,10 @@ class Compiler{
         output.push(new Raw(" ${Runtime.escapeHtml(it.key)}="))
         compileVariables(it.value, output)
       }
-
     })
+    if(isComponent ){
+      output.push(new ConditionalDataEmbed())
+    }
     output.push(new Raw(">"))
     node.childNodes().each {
       compileNode(it, output, queue, false)

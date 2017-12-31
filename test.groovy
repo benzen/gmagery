@@ -10,7 +10,6 @@ def normalizeXmlString = { str ->
   doc.normalise()
 
   def os = doc.outputSettings()
-  os.prettyPrint(true)
   doc.body().children().first().toString().trim().replace("\n", "").replace("  ", " ").replace("  ", " ")
 }
 def tests = [
@@ -75,7 +74,17 @@ def tests = [
    "0620-boolean-property-required",
    "0621-boolean-property-reversed",
    "0622-boolean-property-selected",
-   "0701-call-another-component"
+   "0701-call-another-component",
+   "0702-call-another-component-with-context",
+   "0703-call-another-component-with-string-argument",
+   "0704-data-if-on-component-true",
+   "0705-data-if-on-component-false",
+   "0706-data-unless-on-component-true",
+   "0707-data-unless-on-component-false",
+   "0708-data-each-on-component",
+   "0709-data-key-on-component",
+   "0801-data-embed-on-component",
+   "0802-data-embed-on-component-template"
 ]
 .collect {
   [
@@ -87,7 +96,6 @@ def tests = [
 }
 .each {
     println "Testing $it.test"
-
 
     def compiledTemplate = Compiler.compileTemplates(it.template)
 

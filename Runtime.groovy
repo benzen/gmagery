@@ -1,4 +1,5 @@
 import org.apache.commons.lang.StringEscapeUtils
+import groovy.json.JsonOutput
 
 class Runtime {
   def static render(templates, templateName, data, output, inner= null, embedData = false){
@@ -40,5 +41,8 @@ class Runtime {
         fn(localData)
       }
     }
+  }
+  def static encodeJson(data){
+    JsonOutput.toJson(data)
   }
 }
