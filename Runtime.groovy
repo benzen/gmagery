@@ -45,4 +45,10 @@ class Runtime {
   def static encodeJson(data){
     JsonOutput.toJson(data)
   }
+
+  def static source(templates, templateName){
+    if(templates[templateName]){
+      templates[templateName].src
+    }
+  }
 }

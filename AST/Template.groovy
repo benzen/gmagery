@@ -18,7 +18,7 @@ public class Template {
     results.push("def fn_$id = {templates, data, output, inner, embedData ->\n")
     children.each { node -> node.toGroovy(results)}
     results.push("}\n")
-    results.push("templates[\"$name\"] = [fn:fn_$id]\n")
+    results.push("templates[\"$name\"] = [fn:fn_$id, src: \"\"\"$src\"\"\"]\n")
   }
   def push(o){
     children.push(o)

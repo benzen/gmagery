@@ -13,6 +13,7 @@ import AST.TemplateCall
 import AST.TemplateChildren
 import AST.Unless
 import AST.Variable
+import AST.TemplateEmbed
 import groovy.json.JsonSlurper
 import groovy.util.IndentPrinter
 import groovy.xml.MarkupBuilder
@@ -84,6 +85,10 @@ class Compiler{
 
     if(tagName == "template-children"){
       output.push(new TemplateChildren())
+      return
+    }
+    else if ( tagName == "template-embed"){
+      output.push(new TemplateEmbed(node.attr("template")))
       return
     }
     if(node.hasAttr("data-each")){

@@ -87,7 +87,8 @@ def tests = [
    "0802-data-embed-on-component-template",
    "0901-component-with-child-expansion",
    "0903-nested-child-expansions",
-   "1001-template-call"
+   "1001-template-call",
+   "2001-template-embed"
 ]
 .collect {
   [
