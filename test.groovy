@@ -84,7 +84,8 @@ def tests = [
    "0708-data-each-on-component",
    "0709-data-key-on-component",
    "0801-data-embed-on-component",
-   "0802-data-embed-on-component-template"
+   "0802-data-embed-on-component-template",
+   "0901-component-with-child-expansion"
 ]
 .collect {
   [

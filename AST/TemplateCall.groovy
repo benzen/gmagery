@@ -33,14 +33,30 @@ public class TemplateCall {
   }
 
   def toGroovy(results){
+    def id = UUID.randomUUID().toString().replace("-","_")
+    if(children.size() != 0){
+      results.push("def fn_${id} = {\n")
+      children.each {it.toGroovy(results)}
+      results.push("}\n")
+    }
     if(context){
       results.push("runtime.render(templates, ${attrValueToGroovy(this.name)},[ \n")
       context.each({ k, v ->
         results.push("$k: ${attrValueToGroovy(v)},\n")
       })
-      results.push("], output, inner, ${embededData})\n")
+      if(children.size() != 0){
+        results.push("], output, fn_$id, ${embededData})\n")
+      } else {
+        results.push("], output, inner, ${embededData})\n")
+      }
+
     } else {
-      results.push("runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, inner)\n")
+      if(children.size() != 0){
+        results.push("runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, fn_$id)\n")
+      } else {
+        results.push("runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, inner)\n")
+      }
+
     }
 
   }

@@ -2,7 +2,7 @@ import org.apache.commons.lang.StringEscapeUtils
 import groovy.json.JsonOutput
 
 class Runtime {
-  def static render(templates, templateName, data, output, inner= null, embedData = false){
+  def static render(templates, templateName, data, output, inner = null, embedData = false){
     if(templates[templateName]){
       templates[templateName].fn.call(templates, data, output, inner, embedData)
     }

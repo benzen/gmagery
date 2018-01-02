@@ -10,6 +10,7 @@ import AST.If
 import AST.Raw
 import AST.Template
 import AST.TemplateCall
+import AST.TemplateChildren
 import AST.Unless
 import AST.Variable
 import groovy.json.JsonSlurper
@@ -46,27 +47,25 @@ class Compiler{
 
   //XXX This may not be the best way to do this
   def static compileVariables(str, output){
-
-        def start = 0
-        def end = 0
-        def isText = true
-        def chunk = ""
-        while (start < str?.size()){
-            if(isText){
-                end = str.indexOf("{{", start)
-                end = end == -1 ? str.size() : end
-                chunk = str.substring(start, end).replace("}}", "")
-                output.push(new Raw(StringEscapeUtils.escapeHtml(chunk)))
-            }else {
-                end = str.indexOf("}}", start)
-                end = end == -1 ? str.size() : end
-                chunk = str.substring(start, end).replace("{{", "")
-                output.push(new Variable(chunk.trim().tokenize(".")))
-            }
-            isText = !isText
-            start = end
-
-        }
+    def start = 0
+    def end = 0
+    def isText = true
+    def chunk = ""
+    while (start < str?.size()){
+      if(isText){
+          end = str.indexOf("{{", start)
+          end = end == -1 ? str.size() : end
+          chunk = str.substring(start, end).replace("}}", "")
+          output.push(new Raw(StringEscapeUtils.escapeHtml(chunk)))
+      }else {
+          end = str.indexOf("}}", start)
+          end = end == -1 ? str.size() : end
+          chunk = str.substring(start, end).replace("{{", "")
+          output.push(new Variable(chunk.trim().tokenize(".")))
+      }
+      isText = !isText
+      start = end
+    }
   }
   def static compileTextNode(node, output){
     compileVariables(node.text(), output)
@@ -80,8 +79,12 @@ class Compiler{
         return
       }
       isComponent = true
-
       tagName = node.attr("data-tagname").toLowerCase()
+    }
+
+    if(tagName == "template-children"){
+      output.push(new TemplateChildren())
+      return
     }
     if(node.hasAttr("data-each")){
       def value = node.attr("data-each")
@@ -122,7 +125,7 @@ class Compiler{
       def templateOutput = new TemplateCall(templateName, context, embedData)
       output.push(templateOutput)
       node.childNodes().each { childNode ->
-        compileNode(childNode, context, templateOutput, false)
+        compileNode(childNode, templateOutput, queue, false)
       }
       return
     }
@@ -143,14 +146,13 @@ class Compiler{
             output.push(ifOutput)
             return
           }
-        } else if (it.key == "data-embed"){
+        }
+        output.push(new Raw(" ${Runtime.escapeHtml(it.key)}"))
+      } else if (it.key == "data-embed"){
             output.push(new Raw(" data-context=\""))
             output.push(new EmbeddedData())
             output.push(new Raw("\""))
         } else {
-          output.push(new Raw(" ${Runtime.escapeHtml(it.key)}"))
-        }
-      } else {
         output.push(new Raw(" ${Runtime.escapeHtml(it.key)}="))
         compileVariables(it.value, output)
       }
@@ -172,7 +174,6 @@ class Compiler{
     while(queue.size() > 0){
       def node = queue.first()
       queue = queue.minus(node)
-
       def template = new Template(node.attr("data-tagname"), outerHtml(node))
       compileNode(node, template, queue, true)
       output.push(template)
