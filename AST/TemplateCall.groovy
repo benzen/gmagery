@@ -15,6 +15,7 @@ public class TemplateCall {
   def attrValueToGroovy(attr){
     if(attr.size() == 1){
       if(attr[0] instanceof Variable) {
+
         return "runtime.lookup(data, ${attr[0].path})"
       } else {
         return "\"${attr[0].text}\""
@@ -49,7 +50,6 @@ public class TemplateCall {
       } else {
         results.push("], output, inner, ${embededData})\n")
       }
-
     } else {
       if(children.size() != 0){
         results.push("runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, fn_$id)\n")

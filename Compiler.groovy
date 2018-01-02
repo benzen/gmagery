@@ -122,6 +122,11 @@ class Compiler{
       def templateName = [new Raw(node.tagName().toLowerCase())]
       def embedData = node.attr("data-embed") == "true"
 
+      if(tagName == "template-call"){
+        def templateRaw = node.attr("template")
+        templateName = []
+        compileVariables(templateRaw, templateName)
+      }
       def templateOutput = new TemplateCall(templateName, context, embedData)
       output.push(templateOutput)
       node.childNodes().each { childNode ->
