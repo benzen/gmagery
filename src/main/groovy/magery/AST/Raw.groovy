@@ -13,7 +13,7 @@ public class Raw {
   }
 
   String toGroovy(results){
-    text = StringEscapeUtils.escapeJava text
+    text = StringEscapeUtils.escapeJava(text)
     def str = "output.push(\"${text}\")\n"
     results.push(str)
   }

@@ -10,7 +10,7 @@ public class Variable {
     "{{$path.join(".")}}"
   }
   def toGroovy(results){
-    def quotedPath = path.collect { "\"$it\""   }
+    def quotedPath = path.collect { "\"$it\"" }
     results.push("output.push(runtime.escapeHtml(runtime.toString(runtime.lookup(data, ${quotedPath}))))\n")
   }
 }

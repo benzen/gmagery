@@ -39,7 +39,7 @@ class Runtime {
     if(l instanceof List) {
       l.each { item ->
         def localData = [*:data]
-        localData.put(name, item )
+        localData.put(name, item)
         fn(localData)
       }
     }

@@ -7,14 +7,14 @@ import groovy.util.GroovyTestCase
 
 class CompilerTest  extends GroovyTestCase {
   def normalizeXmlString = { str ->
-    // str
-    Jsoup.parseBodyFragment(str).body().html()
+    str
+    // Jsoup.parseBodyFragment(str).body().html()
   }
   def getFile(pathInClassPath){
     getClass().classLoader.getResource(pathInClassPath).file
 
   }
-  void testAbc(){
+  void testAll(){
     def tests = [
        "0001-empty-template",
        "0002-flat-children",
@@ -55,7 +55,7 @@ class CompilerTest  extends GroovyTestCase {
        "0404-data-each-with-keys",
        "0405-data-each-non-list",
        "0406-data-each-before-data-if",
-       // "0407-data-each-before-data-unless",
+       "0407-data-each-before-data-unless",
        "0501-do-not-render-event-attributes",
        "0601-boolean-property-allowfullscreen",
        "0602-boolean-property-async",

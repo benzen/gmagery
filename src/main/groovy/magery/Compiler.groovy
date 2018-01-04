@@ -66,7 +66,6 @@ class Compiler{
     }
   }
   def static compileTextNode(node, output){
-    // println "#$node.wholeText#"
     def text = node.wholeText
     compileVariables(text, output)
   }
