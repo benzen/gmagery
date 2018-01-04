@@ -1,7 +1,0 @@
-{
-    "items": [
-        {"name": "one", "published": true},
-        {"name": "two", "published": false},
-        {"name": "three", "published": true}
-    ]
-}
