@@ -8,6 +8,7 @@ import org.magery.AST.Raw
 import org.magery.AST.Template
 import org.magery.AST.TemplateCall
 import org.magery.AST.TemplateChildren
+import org.magery.AST.Comment
 import org.magery.AST.Unless
 import org.magery.AST.Variable
 import org.magery.AST.TemplateEmbed
@@ -28,7 +29,8 @@ class Compiler{
   def static compileNode(node, output, queue, isRoot){
     if(node instanceof org.jsoup.nodes.TextNode){
       compileTextNode(node, output)
-    } else if (node instanceof org.jsoup.nodes.Comment || node instanceof org.jsoup.nodes.DocumentType){
+    } else if (node instanceof org.jsoup.nodes.Comment){
+      compileComment(node, output)
     } else if(node instanceof org.jsoup.select.Elements){
       node.each { compileNode(it, output, queue, isRoot)}
     } else if (node  instanceof org.jsoup.nodes.Element) {
@@ -42,9 +44,20 @@ class Compiler{
     }
 
   }
+  def static compileComment(node, output){
+    output.push(new Comment(node.data))
+  }
 
   //XXX This may not be the best way to do this
   def static compileVariables(str, output){
+    def nbOpenedVariableBraces = (str =~ /\{\{/)
+    def nbClosedVariableBraces = (str =~ /\}\}/)
+    def nbPairesOfBraces = (str =~ /\{\{[^\}]*\}\}/)
+    
+    if( nbOpenedVariableBraces.size() != nbClosedVariableBraces.size() || 
+        nbPairesOfBraces.size() != nbOpenedVariableBraces.size() ){ throw new Exception("In text \"${str.trim()}\" variable should be escaped with \"{{\" before and  \"}}\"")}
+    
+      
     def start = 0
     def end = 0
     def isText = true
@@ -99,14 +112,20 @@ class Compiler{
       output = eachOutput
     }
     if(node.hasAttr("data-if")){
-      def value = node.attr("data-if")
+      def value = node.attr("data-if").trim()
+      if(value.contains("{{")){
+        throw new Exception("Value for attribute data-if is \"${value.trim()}\" must not contains \"{{\" or \"}}\"")
+      }
       def path = value.trim().tokenize(".")
       def ifOutput = new If(path)
       output.push(ifOutput)
       output = ifOutput
     }
     if(node.hasAttr("data-unless")){
-      def value = node.attr("data-unless")
+      def value = node.attr("data-unless").trim()
+      if(value.contains("{{")){
+        throw new Exception("Value for attribute data-unless is \"${value.trim()}\" must not contains \"{{\" or \"}}\"")
+      }
       def path = value.trim().tokenize(".")
       def unlessOutput = new Unless(path)
       output.push(unlessOutput)
@@ -116,15 +135,14 @@ class Compiler{
     if(node.tagName().contains("-")){
         def context = [:]
         node.attributes().each {
-          if (! (ignoredAttributes.contains(it.key) || it.key.substring(0, 2) == "on" || it.key == "data-embed")){
-
-            context."$it.key" = []
-            compileVariables(it.value, context."$it.key")
+          if (ignoredAttributes.contains(it.key) || it.key.substring(0, 2) == "on" || it.key == "data-embed"){
+            return
           }
+          context."$it.key" = []
+          compileVariables(it.value, context."$it.key")
         }
       def templateName = [new Raw(node.tagName().toLowerCase())]
       def embedData = node.attr("data-embed") == "true"
-
       if(tagName == "template-call"){
         def templateRaw = node.attr("template")
         templateName = []
@@ -157,16 +175,18 @@ class Compiler{
         }
         output.push(new Raw(" ${Runtime.escapeHtml(it.key)}"))
       } else if (it.key == "data-embed"){
-            output.push(new Raw(" data-context=\""))
+            output.push(new Raw(" data-context='"))
             output.push(new EmbeddedData())
-            output.push(new Raw("\""))
+            output.push(new Raw("'"))
         } else {
         output.push(new Raw(" ${Runtime.escapeHtml(it.key)}=\""))
         compileVariables(it.value, output)
         output.push(new Raw("\""))
       }
     })
-    if(isComponent ){
+
+    
+    if(isComponent &&  node.attr("data-embed") != "true"){
       output.push(new ConditionalDataEmbed())
     }
 
@@ -213,7 +233,9 @@ class Compiler{
     def output = []
     def results = []
     compileFile(fileName, output)
+
     output.each({it.toGroovy(results)})
+
     results.join("").toString()
   }
 

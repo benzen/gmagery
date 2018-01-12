@@ -5,9 +5,11 @@ import groovy.json.JsonOutput
 
 class Runtime {
   def static render(templates, templateName, data, output, inner = null, embedData = false){
-    if(templates[templateName]){
-      templates[templateName].fn.call(templates, data, output, inner, embedData)
+    if(!templates[templateName]){
+        throw new Exception("Template \"$templateName\" is used but it's not defined")
     }
+    templates[templateName].fn.call(templates, data, output, inner, embedData)
+    
   }
 
   def static renderToString(templates, templateName, data){
@@ -19,6 +21,10 @@ class Runtime {
   def static escapeHtml(str){
     StringEscapeUtils.escapeHtml(str)
   }
+  def static escapeHtmlButDoubleQuote(str){
+    StringEscapeUtils.escapeHtml(str).replaceAll("&quot;", "\"")
+  }
+
 
   def static toString(thing){
     if(thing == null ) return ""

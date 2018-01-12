@@ -95,8 +95,10 @@ class CompilerTest  extends GroovyTestCase {
        "2001-template-embed"
     ]
     .collect {
+      println "Loading config for $it"
       [
         test: it,
+        // error: new File(getFile("magery-tests/components/$it/error.txt")).text.trim(),
         template: "magery-tests/components/$it/template.html",
         expected: new File(getFile("magery-tests/components/$it/expected.html")).text.trim(),
         data: new JsonSlurper().parseText(new File(getFile("magery-tests/components/$it/data.json")).text.trim())
@@ -104,14 +106,19 @@ class CompilerTest  extends GroovyTestCase {
     }
     .each {
         println "Testing $it.test"
+        // try {
+          def compiledTemplate = Compiler.compileTemplates(getFile(it.template))
 
-        def compiledTemplate = Compiler.compileTemplates(getFile(it.template))
+          def renderedTemplate = normalizeXmlString Runtime.renderToString(compiledTemplate, 'app-main', it.data)
 
-        def renderedTemplate = normalizeXmlString Runtime.renderToString(compiledTemplate, 'app-main', it.data)
-
-        def expected = normalizeXmlString it.expected
-
-        assert  expected == renderedTemplate
+          def expected = normalizeXmlString it.expected
+          
+          assert  expected == renderedTemplate
+        // } catch (Exception e){
+        //   def errMessage = it.error
+        //   assert e.message ==  errMessage
+        // }
+        
 
 
     }
