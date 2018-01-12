@@ -5,9 +5,6 @@ import groovy.json.JsonSlurper
 import groovy.util.GroovyTestCase
 
 class CompilerTest  extends GroovyTestCase {
-  def normalizeXmlString = { str ->
-    str
-  }
   def getFile(pathInClassPath){
     getClass().classLoader.getResource(pathInClassPath).file
 
@@ -92,35 +89,28 @@ class CompilerTest  extends GroovyTestCase {
        "1001-template-call",
        "2001-template-embed"
     ]
-    .collect {
-      println "Loading config for $it"
-      [
+    .each {
+      println "Testing $it"
+      def unit = [
         test: it,
         // error: new File(getFile("magery-tests/components/$it/error.txt")).text.trim(),
         template: "magery-tests/components/$it/template.html",
         expected: new File(getFile("magery-tests/components/$it/expected.html")).text.trim(),
         data: new JsonSlurper().parseText(new File(getFile("magery-tests/components/$it/data.json")).text.trim())
       ]
-    }
-    .each {
-        println "Testing $it.test"
-        // try {
-          def compiledTemplate = Compiler.compileTemplates(getFile(it.template))
+      
+      // try {
+        def compiledTemplate = Compiler.compileTemplates(getFile(unit.template))
 
-          def renderedTemplate = normalizeXmlString Runtime.renderToString(compiledTemplate, 'app-main', it.data)
+        def renderedTemplate = Runtime.renderToString(compiledTemplate, 'app-main', unit.data)
 
-          def expected = normalizeXmlString it.expected
-          
-          assert  expected == renderedTemplate
-        // } catch (Exception e){
-        //   def errMessage = it.error
-        //   assert e.message ==  errMessage
-        // }
+        def expected = unit.expected
         
-
-
+        assert  expected == renderedTemplate
+      // } catch (Exception e){
+      //   def errMessage = unit.error
+      //   assert e.message ==  errMessage
+      // }
     }
-
   }
-
 }
