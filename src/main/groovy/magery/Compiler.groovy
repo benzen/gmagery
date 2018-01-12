@@ -12,10 +12,6 @@ import org.magery.AST.Comment
 import org.magery.AST.Unless
 import org.magery.AST.Variable
 import org.magery.AST.TemplateEmbed
-import groovy.json.JsonSlurper
-import groovy.util.IndentPrinter
-import groovy.xml.MarkupBuilder
-import java.io.StringWriter
 import org.apache.commons.lang.StringEscapeUtils
 import org.jsoup.Jsoup
 
@@ -98,31 +94,17 @@ class Compiler{
       return
     }
     if(node.hasAttr("data-each")){
-      def value = node.attr("data-each")
-      def parts = value.split(" in ")
-      def name = parts[0]
-      def path = parts[1].trim().tokenize(".")
-      def eachOutput = new Each(name, path)
+      def eachOutput = new Each(node.attr("data-each"))
       output.push(eachOutput)
       output = eachOutput
     }
     if(node.hasAttr("data-if")){
-      def value = node.attr("data-if").trim()
-      if(value.contains("{{")){
-        throw new Exception("Value for attribute data-if is \"${value.trim()}\" must not contains \"{{\" or \"}}\"")
-      }
-      def path = value.trim().tokenize(".")
-      def ifOutput = new If(path)
+      def ifOutput = new If(node.attr("data-if"))
       output.push(ifOutput)
       output = ifOutput
     }
     if(node.hasAttr("data-unless")){
-      def value = node.attr("data-unless").trim()
-      if(value.contains("{{")){
-        throw new Exception("Value for attribute data-unless is \"${value.trim()}\" must not contains \"{{\" or \"}}\"")
-      }
-      def path = value.trim().tokenize(".")
-      def unlessOutput = new Unless(path)
+      def unlessOutput = new Unless(node.attr("data-unless"))
       output.push(unlessOutput)
       output = unlessOutput
     }
@@ -161,8 +143,7 @@ class Compiler{
         if(it.value ==~ /\{\{.*\}\}/){
           def rawPath = it.value.substring(2, it.value.size() - 2).trim()
           if(rawPath){
-            def path = rawPath.tokenize(".")
-            def ifOutput = new If(path)
+            def ifOutput = new If(rawPath)
             ifOutput.push(new Raw(" ${Runtime.escapeHtml(it.key)}"))
             output.push(ifOutput)
             return

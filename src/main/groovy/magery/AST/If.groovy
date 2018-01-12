@@ -3,8 +3,12 @@ package org.magery.AST
 public class If {
   def path
   def children
-  If(path){
-    this.path = path
+  If(value){
+    def trimmedValue = value.trim()
+    if(trimmedValue.contains("{{")){
+      throw new Exception("Value for attribute data-if is \"${trimmedValue}\" must not contains \"{{\" or \"}}\"")
+    }
+    this.path = trimmedValue.tokenize(".")
     this.children = []
   }
   def push(node){

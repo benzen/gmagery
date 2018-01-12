@@ -4,7 +4,12 @@ public class Each {
   def name
   def path
   def children
-  Each(name, path){
+  Each(value){
+    
+    def parts = value.split(" in ")
+    def name = parts[0]
+    def path = parts[1].trim().tokenize(".")
+    
     this.name = name
     this.path = path
     children = []
