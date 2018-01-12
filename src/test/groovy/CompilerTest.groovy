@@ -1,6 +1,5 @@
 import org.magery.Compiler
 import org.magery.Runtime
-import org.jsoup.Jsoup
 import groovy.json.JsonSlurper
 
 import groovy.util.GroovyTestCase
@@ -8,7 +7,6 @@ import groovy.util.GroovyTestCase
 class CompilerTest  extends GroovyTestCase {
   def normalizeXmlString = { str ->
     str
-    // Jsoup.parseBodyFragment(str).body().html()
   }
   def getFile(pathInClassPath){
     getClass().classLoader.getResource(pathInClassPath).file
