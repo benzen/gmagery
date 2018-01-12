@@ -5,7 +5,7 @@ public class TemplateEmbed {
   TemplateEmbed(name){
     this.name = name
   }
-  def toGroovy(results){
-    results.push("output.push(runtime.source(templates, \"$name\"))\n")
+  List<String> toGroovy(){
+    ["output.push(runtime.source(templates, \"$name\"))\n"]
   }
 }

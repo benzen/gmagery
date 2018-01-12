@@ -35,15 +35,11 @@ class Compiler{
       node.each { compileNode(it, output, queue, isRoot)}
     } else if (node  instanceof org.jsoup.nodes.Element) {
       compileElement(node, output, queue, isRoot)
-    } else if(node instanceof Collection){
-      node.each {
-        compileNode(it, output, queue, isRoot)
-      }
     } else{
       throw new Exception(" Unhandeled node type ${node.class} ${node.tagName}")
     }
-
   }
+  
   def static compileComment(node, output){
     output.push(new Comment(node.data))
   }
@@ -56,8 +52,7 @@ class Compiler{
     
     if( nbOpenedVariableBraces.size() != nbClosedVariableBraces.size() || 
         nbPairesOfBraces.size() != nbOpenedVariableBraces.size() ){ throw new Exception("In text \"${str.trim()}\" variable should be escaped with \"{{\" before and  \"}}\"")}
-    
-      
+
     def start = 0
     def end = 0
     def isText = true
@@ -214,13 +209,11 @@ class Compiler{
     }
   }
 
-  def static writeNode(node, output){
-    output.push(node.toString())
+  def static writeNode(node){
+    node.toString()
   }
   def static outerHtml(node){
-    def results = []
-    writeNode(node, results)
-    results.join("").toString()
+    writeNode(node)
   }
 
   def static compileFile(fileName, output){
@@ -231,12 +224,13 @@ class Compiler{
 
   def static compileToString(fileName){
     def output = []
-    def results = []
     compileFile(fileName, output)
 
-    output.each({it.toGroovy(results)})
-
-    results.join("").toString()
+    output
+    .collect({it.toGroovy()})
+    .flatten()
+    .join("")
+    .toString()
   }
 
   def static compileTemplates(fileName, templates = [:]){

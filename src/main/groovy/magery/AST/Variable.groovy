@@ -6,8 +6,10 @@ public class Variable {
     this.path = path
   }
 
-  def toGroovy(results){
+  List<String> toGroovy(){
     def quotedPath = path.collect { "\"$it\"" }
-    results.push("output.push(runtime.escapeHtml(runtime.toString(runtime.lookup(data, ${quotedPath}))))\n")
+    [
+      "output.push(runtime.escapeHtml(runtime.toString(runtime.lookup(data, ${quotedPath}))))\n"
+    ]
   }
 }

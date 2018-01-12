@@ -9,8 +9,8 @@ class Comment{
     this.text = text
   }
 
-  def toGroovy(results){
+  List<String> toGroovy(){
     text = StringEscapeUtils.escapeJava(text)
-    results.push("output.push(\"<!--$text-->\")\n")
+    ["output.push(\"<!--$text-->\")\n"]
   }
 }

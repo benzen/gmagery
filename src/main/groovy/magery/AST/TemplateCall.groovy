@@ -27,6 +27,8 @@ public class TemplateCall {
         def quotedPath = part.path.collect { "\"$it\""}
 
         "runtime.lookup(data, ${quotedPath})"
+      } else if(part instanceof Raw){
+        "\"${part.text}\""
       } else {
         "\"${part}\""
       }
@@ -34,32 +36,38 @@ public class TemplateCall {
     parts.grep({it != "\"\""}).join(" + ")
   }
 
-  def toGroovy(results){
+  List<String> toGroovy(){
     def id = UUID.randomUUID().toString().replace("-","_")
-    if(children.size() != 0){
-      results.push("def fn_${id} = {\n")
-      children.each {it.toGroovy(results)}
-      results.push("}\n")
+    def hasChildren = children.size() != 0
+    def childrenFn = !hasChildren ? [] : [
+      "def fn_${id} = {\n",
+      children.collect( {it.toGroovy()}),
+      "}\n",
+    ].flatten()
+    
+    if( context && hasChildren){
+      childrenFn + [
+        "runtime.render(templates, ${attrValueToGroovy(this.name)},[ \n",
+        context.collect({ k, v ->
+          "$k: ${attrValueToGroovy(v)},\n"
+        }),
+        "], output, fn_$id, ${embededData})\n",
+      ].flatten()
+    } else if( context && !hasChildren) {
+      [
+        "runtime.render(templates, ${attrValueToGroovy(this.name)},[ \n",
+        context.collect({ k, v ->
+          "$k: ${attrValueToGroovy(v)},\n"
+        }),
+        "], output, inner, ${embededData})\n"
+      ].flatten()
+    } else if(!context && hasChildren) {
+      childrenFn + [
+      ["runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, fn_$id)\n"]
+      ]
+    } else if (!context && !hasChildren) {
+      [ "runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, inner)\n" ]
     }
-    if(context){
-      results.push("runtime.render(templates, ${attrValueToGroovy(this.name)},[ \n")
-      context.each({ k, v ->
-        results.push("$k: ${attrValueToGroovy(v)},\n")
-      })
-      if(children.size() != 0){
-        results.push("], output, fn_$id, ${embededData})\n")
-      } else {
-        results.push("], output, inner, ${embededData})\n")
-      }
-    } else {
-      if(children.size() != 0){
-        results.push("runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, fn_$id)\n")
-      } else {
-        results.push("runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, inner)\n")
-      }
-
-    }
-
   }
 
   def push(node){

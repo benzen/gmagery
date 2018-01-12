@@ -12,16 +12,17 @@ public class Each {
   def push(o){
     this.children.push(o)
   }
-  def toGroovy(results){
+  List<String> toGroovy(){
     def id = UUID.randomUUID().toString().replace("-", "_")
     def quotedPath = path.collect { "\"$it\"" }
-    results.push("def fn_$id = { localData ->\n")
-    results.push("def dataBackup = data\n")
-    results.push("data = localData\n")
-    children.each { it.toGroovy(results) }
-    results.push("data = dataBackup\n")
-
-    results.push("}\n")
-    results.push("runtime.each(data, \"$name\", $quotedPath, fn_$id)\n")
+    [
+      "def fn_$id = { localData ->\n",
+      "def dataBackup = data\n",
+      "data = localData\n",
+      children.collect({ it.toGroovy() }),
+      "data = dataBackup\n",
+      "}\n",
+      "runtime.each(data, \"$name\", $quotedPath, fn_$id)\n"
+    ].flatten()
   }
 }

@@ -11,12 +11,14 @@ public class Template {
     children = []
   }
 
-  String toGroovy(results){
+  List<String> toGroovy(){
     def id = UUID.randomUUID().toString().replace("-","_")
-    results.push("def fn_$id = {templates, data, output, inner, embedData ->\n")
-    children.each { node -> node.toGroovy(results)}
-    results.push("}\n")
-    results.push("templates[\"$name\"] = [fn:fn_$id, src: \"\"\"$src\"\"\"]\n")
+    [
+      "def fn_$id = {templates, data, output, inner, embedData ->\n",
+      children.collect({ node -> node.toGroovy() }),
+      "}\n",
+      "templates[\"$name\"] = [fn:fn_$id, src: \"\"\"$src\"\"\"]\n",
+    ].flatten()
   }
   def push(o){
     children.push(o)

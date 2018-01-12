@@ -10,12 +10,12 @@ public class If {
   def push(node){
     this.children.push(node)
   }
-  def toGroovy(results){
+  List<String> toGroovy(){
     def quotedPath = path.collect {"\"$it\""}
-    results.push("if(runtime.lookup(data, $quotedPath)){\n")
-    children.each {
-      it.toGroovy(results)
-    }
-    results.push("}\n")
+    [
+      "if(runtime.lookup(data, $quotedPath)){\n",
+      children.collect({it.toGroovy()}),
+      "}\n",
+    ].flatten()
   }
 }
