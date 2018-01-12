@@ -10,9 +10,7 @@ public class Template {
     this.src = src
     children = []
   }
-  String toString(){
-    "<Template name='$name' src='$src'>"
-  }
+
   String toGroovy(results){
     def id = UUID.randomUUID().toString().replace("-","_")
     results.push("def fn_$id = {templates, data, output, inner, embedData ->\n")

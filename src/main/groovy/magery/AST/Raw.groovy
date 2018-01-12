@@ -8,10 +8,6 @@ public class Raw {
     text = s
   }
 
-  String toString(){
-    text
-  }
-
   String toGroovy(results){
     text = StringEscapeUtils.escapeJava(text)
     def str = "output.push(\"${text}\")\n"
