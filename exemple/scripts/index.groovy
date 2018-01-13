@@ -12,9 +12,11 @@ try{
     <script src="/js/magery-compiler.js" type="text/javascript"></script>
     <script src="/js/magery-patcher.js" type="text/javascript"></script>
     <script src="/js/redux.js" type="text/javascript"></script>
-    ${new File("public/templates/app-title.html").text}
     ${new File("public/templates/app-root.html").text}
     ${new File("public/templates/app-button.html").text}
+    ${new File("public/templates/app-title.html").text}
+    
+    
     
   </head>
   <body>
