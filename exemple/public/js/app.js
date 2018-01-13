@@ -4,36 +4,37 @@ var components = MageryCompiler.compile('template');
 var store = Redux.createStore(function (state, action) {
     if (typeof state === 'undefined') {
       return {
-        title: "fuck mennn",
+        key: "value", 
+        title: "Sake", 
         counter: 0
       };
      }
      switch (action.type) {
-      case 'INCREMENT':
-        return {count: state.counter + 1};
-      case 'DECREMENT':
-        return {count: state.counter - 1};
+      case 'changeCounter':
+        return {count: state.counter + action.change};
+      // case 'DECREMENT':
+      //   return {count: state.counter - 1};
       default:
         return state;
      }
  });
 
- var target = document.querySelector('app-title');
+ var target = document.querySelector('app-root');
  var handlers = {};
 
  function render() {
-    console.log(store.getState())
-    var component = components['app-title']
+   console.log(store.getState())
+    var component = components['app-root']
     component(target, store.getState(), handlers);
  }
 
  // add event handlers using Magery
- handlers.increment = function () {
-     store.dispatch({type: 'INCREMENT'});
+ handlers.buttonHandler = function (change) {
+     store.dispatch({type: 'changeCounter', change: change});
  };
- handlers.decrement = function () {
-     store.dispatch({type: 'DECREMENT'});
- };
+ // handlers.decrement = function () {
+ //     store.dispatch({type: 'DECREMENT'});
+ // };
 
  // update the page when the store changes
  store.subscribe(render);
