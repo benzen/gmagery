@@ -16,8 +16,6 @@ import org.magery.AST.TemplateEmbed
 import org.apache.commons.lang.StringEscapeUtils
 import org.jsoup.Jsoup
 
-
-
 class Compiler{
   def static IGNORED_ATTRIBUTES = ["data-tagname", "data-if", "data-unless", "data-each", "data-key"]
   def static BOOLEAN_ATTRIBUTES = ["allowfullscreen", "async", "autofocus", "autoplay", "capture", "controls", "checked", "default", "defer", "disabled", "formnovalidate", "open", "readonly", "hidden", "itemscope", "loop", "muted", "multiple", "novalidate", "open", "required", "reversed", "selected"]
@@ -112,19 +110,20 @@ class Compiler{
     }
 
     if(node.tagName().contains("-")){
-        def context = [:]
-        node.attributes().each {
-          if (IGNORED_ATTRIBUTES.contains(it.key) || it.key.substring(0, 2) == "on" || it.key == "data-embed"){
-            return
-          }
-          context."$it.key" = compileVariables(it.value)
+        def context = node.attributes()
+        .findAll({!IGNORED_ATTRIBUTES.contains(it.key)})
+        .findAll({it.key.substring(0, 2) != "on"})
+        .findAll({it.key != "data-embed"})
+        .collectEntries {
+          ["$it.key", compileVariables(it.value)]
         }
-      def templateName = [new Raw(node.tagName().toLowerCase())]
-      def embedData = node.attr("data-embed") == "true"
+
+      def templateName = [new Raw(tagName)]
       if(tagName == "template-call"){
         def templateRaw = node.attr("template")
         templateName = compileVariables(templateRaw)
       }
+      def embedData = node.attr("data-embed") == "true"
       def templateOutput = new TemplateCall(templateName, context, embedData)
       output.push(templateOutput)
       node.childNodes().each { childNode ->
@@ -160,7 +159,6 @@ class Compiler{
       def template = new Template(node.attr("data-tagname"), outerHtml(node))
       compileNode(node, template, queue, true)
       output.push(template)
-
     }
   }
 
