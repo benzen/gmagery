@@ -10,7 +10,11 @@ public class Template {
     this.src = src
     children = []
   }
-
+  
+  def push(o){
+    children.push(o)
+  }
+  
   List<String> toGroovy(){
     def id = UUID.randomUUID().toString().replace("-","_")
     [
@@ -18,9 +22,7 @@ public class Template {
       children.collect({ node -> node.toGroovy() }),
       "}\n",
       "templates[\"$name\"] = [fn:fn_$id, src: \"\"\"$src\"\"\"]\n",
-    ].flatten()
+    ]
   }
-  def push(o){
-    children.push(o)
-  }
+  
 }

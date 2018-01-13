@@ -28,6 +28,6 @@ public class Each {
       "data = dataBackup\n",
       "}\n",
       "runtime.each(data, \"$name\", $quotedPath, fn_$id)\n"
-    ].flatten()
+    ]
   }
 }

@@ -22,6 +22,6 @@ public class Unless {
         it.toGroovy()
       },
       "}\n"
-    ].flatten()
+    ]
   }
 }

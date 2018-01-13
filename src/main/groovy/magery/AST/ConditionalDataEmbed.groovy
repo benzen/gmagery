@@ -8,6 +8,6 @@ public class ConditionalDataEmbed {
       new EmbeddedData().toGroovy(),
       new Raw("'").toGroovy(),
       "}\n"
-    ].flatten()
+    ]
   }
 }

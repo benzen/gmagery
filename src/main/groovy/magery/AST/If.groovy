@@ -20,6 +20,6 @@ public class If {
       "if(runtime.lookup(data, $quotedPath)){\n",
       children.collect({it.toGroovy()}),
       "}\n",
-    ].flatten()
+    ]
   }
 }

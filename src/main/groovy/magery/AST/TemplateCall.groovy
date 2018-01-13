@@ -43,7 +43,7 @@ public class TemplateCall {
       "def fn_${id} = {\n",
       children.collect( {it.toGroovy()}),
       "}\n",
-    ].flatten()
+    ]
     
     if( context && hasChildren){
       childrenFn + [
@@ -52,7 +52,7 @@ public class TemplateCall {
           "$k: ${attrValueToGroovy(v)},\n"
         }),
         "], output, fn_$id, ${embededData})\n",
-      ].flatten()
+      ]
     } else if( context && !hasChildren) {
       [
         "runtime.render(templates, ${attrValueToGroovy(this.name)},[ \n",
@@ -60,7 +60,7 @@ public class TemplateCall {
           "$k: ${attrValueToGroovy(v)},\n"
         }),
         "], output, inner, ${embededData})\n"
-      ].flatten()
+      ]
     } else if(!context && hasChildren) {
       childrenFn + [
       ["runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, fn_$id)\n"]
