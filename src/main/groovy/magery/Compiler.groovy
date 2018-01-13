@@ -11,6 +11,7 @@ import org.magery.AST.TemplateChildren
 import org.magery.AST.Comment
 import org.magery.AST.Unless
 import org.magery.AST.Variable
+import org.magery.AST.Attributes
 import org.magery.AST.TemplateEmbed
 import org.apache.commons.lang.StringEscapeUtils
 import org.jsoup.Jsoup
@@ -18,9 +19,9 @@ import org.jsoup.Jsoup
 
 
 class Compiler{
-  def static ignoredAttributes = ["data-tagname", "data-if", "data-unless", "data-each", "data-key"]
-  def static booleanAttributes = ["allowfullscreen", "async", "autofocus", "autoplay", "capture", "controls", "checked", "default", "defer", "disabled", "formnovalidate", "open", "readonly", "hidden", "itemscope", "loop", "muted", "multiple", "novalidate", "open", "required", "reversed", "selected"]
-  def static selfClosingTags = ["area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr"]
+  def static IGNORED_ATTRIBUTES = ["data-tagname", "data-if", "data-unless", "data-each", "data-key"]
+  def static BOOLEAN_ATTRIBUTES = ["allowfullscreen", "async", "autofocus", "autoplay", "capture", "controls", "checked", "default", "defer", "disabled", "formnovalidate", "open", "readonly", "hidden", "itemscope", "loop", "muted", "multiple", "novalidate", "open", "required", "reversed", "selected"]
+  def static SELF_CLOSING_TAGS = ["area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr"]
 
   def static compileNode(node, output, queue, isRoot){
     if(node instanceof org.jsoup.nodes.TextNode){
@@ -117,7 +118,7 @@ class Compiler{
     if(node.tagName().contains("-")){
         def context = [:]
         node.attributes().each {
-          if (ignoredAttributes.contains(it.key) || it.key.substring(0, 2) == "on" || it.key == "data-embed"){
+          if (IGNORED_ATTRIBUTES.contains(it.key) || it.key.substring(0, 2) == "on" || it.key == "data-embed"){
             return
           }
           context."$it.key" = compileVariables(it.value)
@@ -137,43 +138,14 @@ class Compiler{
     }
 
     output.push(new Raw("<$tagName"))
-
-    node.attributes()
-    .grep({!ignoredAttributes.contains(it.key)})
-    .grep({ it.key.indexOf("on") != 0})
-    .each({
-      if(booleanAttributes.contains(it.key)){
-        if(it.value ==~ /\{\{.*\}\}/){
-          def rawPath = it.value.substring(2, it.value.size() - 2).trim()
-          if(rawPath){
-            def ifOutput = new If(rawPath)
-            ifOutput.push(new Raw(" ${Runtime.escapeHtml(it.key)}"))
-            output.push(ifOutput)
-            return
-          }
-        }
-        output.push(new Raw(" ${Runtime.escapeHtml(it.key)}"))
-      } else if (it.key == "data-embed"){
-            output.push(new Raw(" data-context='"))
-            output.push(new EmbeddedData())
-            output.push(new Raw("'"))
-        } else {
-        output.push(new Raw(" ${Runtime.escapeHtml(it.key)}=\""))
-        compileVariables(it.value).each {
-          output.push(it)
-        }
-        
-        output.push(new Raw("\""))
-      }
-    })
-
+    output.push(new Attributes(node.attributes()))
     
     if(isComponent &&  node.attr("data-embed") != "true"){
       output.push(new ConditionalDataEmbed())
     }
 
     output.push(new Raw(">"))
-    if(!selfClosingTags.contains(tagName) ){
+    if(!SELF_CLOSING_TAGS.contains(tagName) ){
       node.childNodes().each {
         compileNode(it, output, queue, false)
 
