@@ -40,38 +40,34 @@ class Compiler{
   def static compileComment(node, output){
     output.push(new Comment(node.data))
   }
-
-  //XXX This may not be the best way to do this
-  def static compileVariables(str){
-    def output = []
-    def nbOpenedVariableBraces = (str =~ /\{\{/)
-    def nbClosedVariableBraces = (str =~ /\}\}/)
-    def nbPairesOfBraces = (str =~ /\{\{[^\}]*\}\}/)
+  def static compileVariables(text){
+    def compileVariablesRec
+    compileVariablesRec = {str, isText, acc ->
+      if(str.size() == 0){ return acc.flatten() }
+      if(isText){
+        def end = str.indexOf("{{")
+        end = end == -1 ? str.size() : end
+        def chunk = str.substring(0, end).replace("}}", "")
+        return compileVariablesRec(str.substring(end, str.size()), !isText, [acc, new Raw(StringEscapeUtils.escapeHtml(chunk))])
+      } else {
+        def end = str.indexOf("}}")
+        end = end == -1 ? str.size() : end
+        def chunk = str.substring(0, end).replace("{{", "")
+        return compileVariablesRec(str.substring(end, str.size()), !isText, [acc, new Variable(chunk.trim().tokenize("."))])
+      }
+    }
+    
+    def nbOpenedVariableBraces = (text =~ /\{\{/)
+    def nbClosedVariableBraces = (text =~ /\}\}/)
+    def nbPairesOfBraces = (text =~ /\{\{[^\}]*\}\}/)
     
     if( nbOpenedVariableBraces.size() != nbClosedVariableBraces.size() || 
-        nbPairesOfBraces.size() != nbOpenedVariableBraces.size() ){ throw new Exception("In text \"${str.trim()}\" variable should be escaped with \"{{\" before and  \"}}\"")}
+        nbPairesOfBraces.size() != nbOpenedVariableBraces.size() ){ throw new Exception("In text \"${text.trim()}\" variable should be escaped with \"{{\" before and  \"}}\"")}
 
-    def start = 0
-    def end = 0
-    def isText = true
-    def chunk = ""
-    while (start < str?.size()){
-      if(isText){
-          end = str.indexOf("{{", start)
-          end = end == -1 ? str.size() : end
-          chunk = str.substring(start, end).replace("}}", "")
-          output.push(new Raw(StringEscapeUtils.escapeHtml(chunk)))
-      }else {
-          end = str.indexOf("}}", start)
-          end = end == -1 ? str.size() : end
-          chunk = str.substring(start, end).replace("{{", "")
-          output.push(new Variable(chunk.trim().tokenize(".")))
-      }
-      isText = !isText
-      start = end
-    }
-    output
+    compileVariablesRec(text, true, [])
   }
+  
+    
   def static compileTextNode(node, output){
     def text = node.wholeText
     def vOuput = compileVariables(text)
