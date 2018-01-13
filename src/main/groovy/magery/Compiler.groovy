@@ -41,7 +41,8 @@ class Compiler{
   }
 
   //XXX This may not be the best way to do this
-  def static compileVariables(str, output){
+  def static compileVariables(str){
+    def output = []
     def nbOpenedVariableBraces = (str =~ /\{\{/)
     def nbClosedVariableBraces = (str =~ /\}\}/)
     def nbPairesOfBraces = (str =~ /\{\{[^\}]*\}\}/)
@@ -68,10 +69,14 @@ class Compiler{
       isText = !isText
       start = end
     }
+    output
   }
   def static compileTextNode(node, output){
     def text = node.wholeText
-    compileVariables(text, output)
+    def vOuput = compileVariables(text)
+    vOuput.each {
+      output.push(it)
+    }
   }
   def static compileElement(node, output, queue, isRoot){
     def tagName = node.tagName().toLowerCase()
@@ -115,15 +120,13 @@ class Compiler{
           if (ignoredAttributes.contains(it.key) || it.key.substring(0, 2) == "on" || it.key == "data-embed"){
             return
           }
-          context."$it.key" = []
-          compileVariables(it.value, context."$it.key")
+          context."$it.key" = compileVariables(it.value)
         }
       def templateName = [new Raw(node.tagName().toLowerCase())]
       def embedData = node.attr("data-embed") == "true"
       if(tagName == "template-call"){
         def templateRaw = node.attr("template")
-        templateName = []
-        compileVariables(templateRaw, templateName)
+        templateName = compileVariables(templateRaw)
       }
       def templateOutput = new TemplateCall(templateName, context, embedData)
       output.push(templateOutput)
@@ -156,7 +159,10 @@ class Compiler{
             output.push(new Raw("'"))
         } else {
         output.push(new Raw(" ${Runtime.escapeHtml(it.key)}=\""))
-        compileVariables(it.value, output)
+        compileVariables(it.value).each {
+          output.push(it)
+        }
+        
         output.push(new Raw("\""))
       }
     })
