@@ -97,7 +97,8 @@ class CompilerTest  extends GroovyTestCase {
        "3016-unbalanced-currly-braces-on-attribute",
        "3021-variable-in-data-if",
        "3022-variable-in-data-unless",
-       "3031-template-name-without-dash"
+       "3031-template-name-without-dash",
+       "3041-overriding-a-template"
     ]
     .each {
       println "Testing $it"
