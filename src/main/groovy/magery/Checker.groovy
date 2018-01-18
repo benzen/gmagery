@@ -2,9 +2,14 @@ package org.magery
 
 class Checker{
   static def checkAll(templateTree){
-    checkEscaping(templateTree)
-    checkDataIf(templateTree)
-    checkDataUnless(templateTree)
+    def tests = [
+      "checkEscaping",
+      "checkDataIf",
+      "checkDataUnless",
+    ]
+    tests.each {
+      Checker."$it"(templateTree)
+    }
   }
 
   static def checkEscaping(node){
@@ -60,7 +65,6 @@ class Checker{
           throw new Exception("Unhandeled Node type ${node.class}")
         }
   }
-
   static def checkDataUnless(node){
     def checkDataUnlessInAttributes = { attributes ->
       def attr = attributes.each({
