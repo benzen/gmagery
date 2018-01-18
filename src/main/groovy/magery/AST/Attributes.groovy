@@ -12,7 +12,6 @@ class Attributes{
     .grep({!Html.IGNORED_ATTRIBUTES.contains(it.key)})
     .grep({ it.key.indexOf("on") != 0})
     .collect({
-      println "$it.key ${containsUpperCase(it.key)}"
       if(containsUpperCase(it.key)){
         throw new Exception("Attribute \"$it.key\" is illegal for an attribute, use dashed-case instead of camel case.")
       }
