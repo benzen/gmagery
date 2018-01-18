@@ -6,6 +6,7 @@ class Checker{
       "checkEscaping",
       "checkDataIf",
       "checkDataUnless",
+      "checkTemplateName"
     ]
     tests.each {
       Checker."$it"(templateTree)
@@ -89,5 +90,27 @@ class Checker{
       throw new Exception("Unhandeled Node type ${node.class}")
     }
   }
-
+  static def checkTemplateName(node){
+    def checkTemplateNameOnElement = { currentNode ->
+      def tagName = currentNode.tagName().toLowerCase()
+      def templateName = currentNode.attr("data-tagname")?.toLowerCase()
+      if(tagName == "template" && !templateName?.contains("-")){
+        throw new Exception("Template name \"$templateName\" is incorrect, it's mandatory that template name include a \"-\" character")
+      }
+    }
+    if(node  instanceof org.jsoup.nodes.Element){
+      checkTemplateNameOnElement(node)
+      node.childNodes().each({
+        checkTemplateName(it)
+      })
+    } else if(node instanceof org.jsoup.nodes.TextNode){
+      //Left blank intentionally
+    } else if(node instanceof org.jsoup.select.Elements){
+      node.each { checkTemplateName(it) }
+    } else if (node instanceof org.jsoup.nodes.Comment){
+      //Left blank intentionally
+    }else {
+      throw new Exception("Unhandeled Node type ${node.class}")
+    }
+  }
 }

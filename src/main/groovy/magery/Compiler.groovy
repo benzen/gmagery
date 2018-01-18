@@ -162,9 +162,6 @@ class Compiler{
       def node = queue.first()
       queue = queue.minus(node)
       def templateName = node.attr("data-tagname")
-      if(!templateName.contains("-")){
-        throw new Exception("Template name \"$templateName\" is incorrect, it's mandatory that template name include a \"-\" character")
-      }
       def template = new Template(templateName, outerHtml(node))
       compileNode(node, template, queue, true)
       output.push(template)
