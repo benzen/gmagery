@@ -4,6 +4,7 @@ class Checker{
   static def checkAll(templateTree){
     checkEscaping(templateTree)
     checkDataIf(templateTree)
+    checkDataUnless(templateTree)
   }
 
   static def checkEscaping(node){
@@ -60,5 +61,29 @@ class Checker{
         }
   }
 
+  static def checkDataUnless(node){
+    def checkDataUnlessInAttributes = { attributes ->
+      def attr = attributes.each({
+        if(it.key == "data-unless" && it.value.contains("{{")){
+          throw new Exception("Value for attribute data-unless is \"${it.value.trim()}\" must not contains \"{{\" or \"}}\"")
+        }
+      })
+
+    }
+    if(node  instanceof org.jsoup.nodes.Element){
+      checkDataUnlessInAttributes(node.attributes())
+      node.childNodes().each({
+        checkDataUnless(it)
+      })
+    } else if(node instanceof org.jsoup.nodes.TextNode){
+      //Left blank intentionally
+    } else if(node instanceof org.jsoup.select.Elements){
+      node.each { checkDataUnless(it) }
+    } else if (node instanceof org.jsoup.nodes.Comment){
+      //Left blank intentionally
+    }else {
+      throw new Exception("Unhandeled Node type ${node.class}")
+    }
+  }
 
 }

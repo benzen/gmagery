@@ -5,9 +5,6 @@ public class Unless {
   def children
   Unless(value){
     def trimmedValue = value.trim()
-    if(trimmedValue.contains("{{")){
-      throw new Exception("Value for attribute data-unless is \"${trimmedValue}\" must not contains \"{{\" or \"}}\"")
-    }
     this.path = trimmedValue.tokenize(".")
     this.children = []
   }
