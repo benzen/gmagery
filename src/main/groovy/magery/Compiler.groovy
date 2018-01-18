@@ -53,14 +53,6 @@ class Compiler{
         return compileVariablesRec(str.substring(end, str.size()), !isText, [acc, new Variable(chunk.trim().tokenize("."))])
       }
     }
-
-    def nbOpenedVariableBraces = (text =~ /\{\{/)
-    def nbClosedVariableBraces = (text =~ /\}\}/)
-    def nbPairesOfBraces = (text =~ /\{\{[^\}]*\}\}/)
-
-    if( nbOpenedVariableBraces.size() != nbClosedVariableBraces.size() ||
-        nbPairesOfBraces.size() != nbOpenedVariableBraces.size() ){ throw new Exception("In text \"${text.trim()}\" variable should be escaped with \"{{\" before and  \"}}\"")}
-
     compileVariablesRec(text, true, [])
   }
 
@@ -192,6 +184,7 @@ class Compiler{
     Parser parser = Parser.htmlParser()
     parser.settings(new ParseSettings(true, true)) // tag, attribute preserve case
     def tree = parser.parseInput(str, "").body().children()
+    Checker.checkAll(tree)
     compileTree(tree, output)
   }
 

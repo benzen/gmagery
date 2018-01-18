@@ -5,9 +5,6 @@ public class If {
   def children
   If(value){
     def trimmedValue = value.trim()
-    if(trimmedValue.contains("{{")){
-      throw new Exception("Value for attribute data-if is \"${trimmedValue}\" must not contains \"{{\" or \"}}\"")
-    }
     this.path = trimmedValue.tokenize(".")
     this.children = []
   }
