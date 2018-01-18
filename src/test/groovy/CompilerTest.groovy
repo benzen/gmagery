@@ -98,7 +98,8 @@ class CompilerTest  extends GroovyTestCase {
        "3021-variable-in-data-if",
        "3022-variable-in-data-unless",
        "3031-template-name-without-dash",
-       "3041-overriding-a-template"
+       "3041-overriding-a-template",
+       "3051-illegal-attribute-name"
     ]
     .each {
       println "Testing $it"
@@ -109,14 +110,14 @@ class CompilerTest  extends GroovyTestCase {
         expected: new File(getFile("magery-tests/components/$it/expected.html")).text.trim(),
         data: new JsonSlurper().parseText(new File(getFile("magery-tests/components/$it/data.json")).text.trim())
       ]
-      
+
       try {
         def compiledTemplate = Compiler.compileTemplates(getFile(unit.template))
 
         def renderedTemplate = Runtime.renderToString(compiledTemplate, 'app-main', unit.data)
 
         def expected = unit.expected
-        
+
         assert  expected == renderedTemplate
       } catch (Exception e){
         def errMessage = unit.error

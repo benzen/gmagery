@@ -2,16 +2,21 @@ package org.magery.AST
 
 import org.magery.Compiler
 import org.magery.Runtime
+import org.magery.Html
 
 class Attributes{
   def attributes
   Attributes(attributes){
-    this.attributes = 
+    this.attributes =
     attributes
-    .grep({!Compiler.IGNORED_ATTRIBUTES.contains(it.key)})
+    .grep({!Html.IGNORED_ATTRIBUTES.contains(it.key)})
     .grep({ it.key.indexOf("on") != 0})
     .collect({
-      if(Compiler.BOOLEAN_ATTRIBUTES.contains(it.key)){
+      println "$it.key ${containsUpperCase(it.key)}"
+      if(containsUpperCase(it.key)){
+        throw new Exception("Attribute \"$it.key\" is illegal for an attribute, use dashed-case instead of camel case.")
+      }
+      if(Html.BOOLEAN_ATTRIBUTES.contains(it.key)){
         if(it.value ==~ /\{\{.*\}\}/){
           def rawPath = it.value.substring(2, it.value.size() - 2).trim()
           if(rawPath){
@@ -36,8 +41,13 @@ class Attributes{
       }
     }).flatten()
   }
+  boolean containsUpperCase(str){
+    def upperCasedChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
+    upperCasedChar.any({ str.contains(it)})
+  }
+
   List<String> toGroovy(){
     attributes.collect({ it.toGroovy() })
-    
+
   }
 }

@@ -15,12 +15,11 @@ import org.magery.AST.Attributes
 import org.magery.AST.TemplateEmbed
 import org.apache.commons.lang.StringEscapeUtils
 import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
+import org.jsoup.nodes.Document
+import org.jsoup.parser.ParseSettings
 
 class Compiler{
-  def static IGNORED_ATTRIBUTES = ["data-tagname", "data-if", "data-unless", "data-each", "data-key"]
-  def static BOOLEAN_ATTRIBUTES = ["allowfullscreen", "async", "autofocus", "autoplay", "capture", "controls", "checked", "default", "defer", "disabled", "formnovalidate", "open", "readonly", "hidden", "itemscope", "loop", "muted", "multiple", "novalidate", "open", "required", "reversed", "selected"]
-  def static SELF_CLOSING_TAGS = ["area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr"]
-
   def static compileNode(node, output, queue, isRoot){
     if(node instanceof org.jsoup.nodes.TextNode){
       compileTextNode(node, output)
@@ -34,7 +33,7 @@ class Compiler{
       throw new Exception(" Unhandeled node type ${node.class} ${node.tagName}")
     }
   }
-  
+
   def static compileComment(node, output){
     output.push(new Comment(node.data))
   }
@@ -54,18 +53,18 @@ class Compiler{
         return compileVariablesRec(str.substring(end, str.size()), !isText, [acc, new Variable(chunk.trim().tokenize("."))])
       }
     }
-    
+
     def nbOpenedVariableBraces = (text =~ /\{\{/)
     def nbClosedVariableBraces = (text =~ /\}\}/)
     def nbPairesOfBraces = (text =~ /\{\{[^\}]*\}\}/)
-    
-    if( nbOpenedVariableBraces.size() != nbClosedVariableBraces.size() || 
+
+    if( nbOpenedVariableBraces.size() != nbClosedVariableBraces.size() ||
         nbPairesOfBraces.size() != nbOpenedVariableBraces.size() ){ throw new Exception("In text \"${text.trim()}\" variable should be escaped with \"{{\" before and  \"}}\"")}
 
     compileVariablesRec(text, true, [])
   }
-  
-    
+
+
   def static compileTextNode(node, output){
     def text = node.wholeText
     def vOuput = compileVariables(text)
@@ -110,14 +109,8 @@ class Compiler{
     }
 
     if(node.tagName().contains("-")){
-        def context = node.attributes()
-        .findAll({!IGNORED_ATTRIBUTES.contains(it.key)})
-        .findAll({it.key.substring(0, 2) != "on"})
-        .findAll({it.key != "data-embed"})
-        .collectEntries {
-          ["$it.key", compileVariables(it.value)]
-        }
 
+      def context = attributesToContext(node.attributes())
       def templateName = [new Raw(tagName)]
       if(tagName == "template-call"){
         def templateRaw = node.attr("template")
@@ -134,13 +127,13 @@ class Compiler{
 
     output.push(new Raw("<$tagName"))
     output.push(new Attributes(node.attributes()))
-    
+
     if(isComponent &&  node.attr("data-embed") != "true"){
       output.push(new ConditionalDataEmbed())
     }
 
     output.push(new Raw(">"))
-    if(!SELF_CLOSING_TAGS.contains(tagName) ){
+    if(!Html.SELF_CLOSING_TAGS.contains(tagName) ){
       node.childNodes().each {
         compileNode(it, output, queue, false)
 
@@ -148,6 +141,26 @@ class Compiler{
       output.push(new Raw("</$tagName>"))
     }
 
+  }
+  static def attributesToContext(attributes){
+    def context = attributes
+     .findAll({!Html.IGNORED_ATTRIBUTES.contains(it.key)})
+     .findAll({it.key.substring(0, 2) != "on"})
+     .findAll({it.key != "data-embed"})
+     .collectEntries {
+       ["$it.key", compileVariables(it.value)]
+     }
+    context.each({
+      if(containsUpperCase(it.key)){
+        throw new Exception("Attribute \"$it.key\" is illegal for an attribute, use dashed-case instead of camel case.")
+      }
+    })
+    context
+  }
+
+  static boolean containsUpperCase(str){
+    def upperCasedChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
+    upperCasedChar.any({ str.contains(it)})
   }
 
   def static compileTree(tree, output){
@@ -175,7 +188,10 @@ class Compiler{
 
   def static compileFile(fileName, output){
     def str = new File(fileName).text
-    def tree = Jsoup.parseBodyFragment(str).body().children()
+
+    Parser parser = Parser.htmlParser()
+    parser.settings(new ParseSettings(true, true)) // tag, attribute preserve case
+    def tree = parser.parseInput(str, "").body().children()
     compileTree(tree, output)
   }
 
