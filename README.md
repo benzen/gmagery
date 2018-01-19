@@ -9,19 +9,19 @@ Magery is nicely explained here [here](https://github.com/caolan/magery/)
 At the moment this implementation passes the test-suite defined [here](https://github.com/caolan/magery-tests) with problem with
 whitespace
 
-#Use as dependecy
+# Use as dependecy
 
 Using Grab for the groovy-peoples
 
-  @Grab(group='org.magery', module='groovy-magery', version='0.1'),
+    @Grab(group='org.magery', module='groovy-magery', version='0.1'),
 
 Using maven for the standard folks
 
-  <dependency>
-    <groupId>org.magery</groupId>
-    <artifactId>groovy-magery</artifactId>
-    <version>0.1</version>
-  </dependency>
+    <dependency>
+      <groupId>org.magery</groupId>
+      <artifactId>groovy-magery</artifactId>
+      <version>0.1</version>
+    </dependency>
 
 
 I do not intend to release a version yet (mvn publish kind of release).
