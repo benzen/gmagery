@@ -29,7 +29,7 @@ class Checker{
           carrets = (matchResult.start()..matchResult.end()-3).collect({"^"}).join("")
           spaces = (0..matchResult.start()+1).collect({" "}).join("")
         }
-        println "${matchResult.start()}"
+
         def msg = """
 In file: $fileName
 At line: $lineIndex

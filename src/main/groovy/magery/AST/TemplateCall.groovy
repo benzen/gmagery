@@ -39,35 +39,26 @@ public class TemplateCall {
   List<String> toGroovy(){
     def id = UUID.randomUUID().toString().replace("-","_")
     def hasChildren = children.size() != 0
-    def childrenFn = !hasChildren ? [] : [
+    def childrenFn = hasChildren ? [
       "def fn_${id} = {\n",
       children.collect( {it.toGroovy()}),
       "}\n",
+    ] : []
+
+    def contextAsString = context ?
+    [ "[ \n",
+      context.collect({ k, v ->
+        "$k: ${attrValueToGroovy(v)},\n"
+      }),
+      "],"
+    ].flatten().join("") : "[:]"
+    def inner = hasChildren ? "fn_$id" : "inner"
+
+
+    childrenFn + [
+      "runtime.render(templates, ${attrValueToGroovy(this.name)}, $contextAsString, output, $inner, ${embededData})\n",
     ]
-    
-    if( context && hasChildren){
-      childrenFn + [
-        "runtime.render(templates, ${attrValueToGroovy(this.name)},[ \n",
-        context.collect({ k, v ->
-          "$k: ${attrValueToGroovy(v)},\n"
-        }),
-        "], output, fn_$id, ${embededData})\n",
-      ]
-    } else if( context && !hasChildren) {
-      [
-        "runtime.render(templates, ${attrValueToGroovy(this.name)},[ \n",
-        context.collect({ k, v ->
-          "$k: ${attrValueToGroovy(v)},\n"
-        }),
-        "], output, inner, ${embededData})\n"
-      ]
-    } else if(!context && hasChildren) {
-      childrenFn + [
-      ["runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, fn_$id)\n"]
-      ]
-    } else if (!context && !hasChildren) {
-      [ "runtime.render(templates, ${attrValueToGroovy(this.name)}, data, output, inner)\n" ]
-    }
+
   }
 
   def push(node){
