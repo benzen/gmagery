@@ -1,4 +1,4 @@
-# magery-groovy
+# groovy-magery
 A groovy (jvm) implementation of magery
 
 This repository contains a groovy (jvm) implementation of magery templating system.
