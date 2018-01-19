@@ -1,11 +1,7 @@
 var components = MageryCompiler.compile('template');
 
-var initialState = {
-  key: "value", 
-  title: "Sake", 
-  counter: 0
-};
-// create a store
+//window.APP.initialState is defined in index.html
+var initialState = window.APP.initialState;
 var store = Redux.createStore(function (state, action) {
     if (typeof state === 'undefined') {
       return initialState
@@ -23,16 +19,16 @@ var store = Redux.createStore(function (state, action) {
  var target = document.querySelector('app-root')
  var handlers = {};
 
- 
+
  // add event handlers using Magery
  handlers.increment = function () {
      store.dispatch({type: 'INCREMENT'});
  };
  handlers.decrement = function () {
      store.dispatch({type: 'DECREMENT'});
- }; 
- 
- var render = function(){  
+ };
+
+ var render = function(){
     components['app-root'](target, store.getState(), handlers);
  }
 

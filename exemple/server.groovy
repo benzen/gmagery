@@ -16,7 +16,7 @@ def startJetty() {
     def handler = new ServletContextHandler(ServletContextHandler.SESSIONS)
     handler.contextPath = '/'
     handler.resourceBase = '.'
-    handler.addServlet(GroovyServlet, '/scripts/*')
+    handler.addServlet(GroovyServlet, '/index.html')
     def filesHolder = handler.addServlet(DefaultServlet, '/')
     filesHolder.setInitParameter('resourceBase', './public')
 
