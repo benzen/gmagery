@@ -22,6 +22,7 @@ def startJetty() {
 
     server.handler = handler
     server.start()
+    println "Open browser on http://localhost:9090/index.html"
 }
 
 println "Starting Jetty, press Ctrl+C to stop."
