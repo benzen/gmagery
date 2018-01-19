@@ -177,11 +177,11 @@ class Compiler{
 
   def static compileFile(fileName, output){
     def str = new File(fileName).text
-
+    Checker.checkAll(fileName, str)
     Parser parser = Parser.htmlParser()
     parser.settings(new ParseSettings(true, true)) // tag, attribute preserve case
     def tree = parser.parseInput(str, "").body().children()
-    Checker.checkAll(tree)
+
     compileTree(tree, output)
   }
 
