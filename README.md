@@ -4,7 +4,7 @@ A groovy (jvm) implementation of magery
 This repository contains a groovy (jvm) implementation of magery templating system.
 Magery can be used as client and as server templating system.
 
-Magery is nicely explained here [here](https://github.com/caolan/magery/)
+Magery is nicely explained [here](https://github.com/caolan/magery/)
 
 At the moment this implementation passes the test-suite defined [here](https://github.com/caolan/magery-tests) with problem with
 whitespace
@@ -61,7 +61,7 @@ Runtime.renderToString(templates, "app-main", data)
 
 # Example
 
-js-magery give a lot of extensive exemple about the templating language possibilities.
+[js-magery](https://github.com/caolan/magery/) give a lot of extensive exemple about the templating language possibilities.
 In this repository, we have an exemple of server rendering a bunch of templates,
 and front-end taking it over without any reload or anything.
 
