@@ -12,9 +12,11 @@ whitespace
 #Use as dependecy
 
 Using Grab for the groovy-peoples
+
   @Grab(group='org.magery', module='groovy-magery', version='0.1'),
 
 Using maven for the standard folks
+
   <dependency>
     <groupId>org.magery</groupId>
     <artifactId>groovy-magery</artifactId>
