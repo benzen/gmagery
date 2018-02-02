@@ -31,7 +31,7 @@ class Checker{
         }
 
         def msg = """
-In file: $fileName
+In file: ${fileName}
 At line: $lineIndex
 $message
 $line

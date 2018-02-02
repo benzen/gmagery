@@ -30,7 +30,7 @@ class Compiler{
     } else if (node  instanceof org.jsoup.nodes.Element) {
       compileElement(node, output, queue, isRoot)
     } else{
-      throw new Exception(" Unhandeled node type ${node.class} ${node.tagName}")
+      throw new Exception("Unhandeled node type ${node.class} ${node.tagName}")
     }
   }
 
@@ -152,7 +152,7 @@ class Compiler{
 
   static boolean containsUpperCase(str){
     def upperCasedChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
-    upperCasedChar.any({ str.contains(it)})
+    upperCasedChar.any({ str.contains(it) })
   }
 
   def static compileTree(tree, output){
@@ -176,7 +176,8 @@ class Compiler{
   }
 
   def static compileFile(fileName, output){
-    def str = new File(fileName).text
+    def file = getClass().getResource(fileName).file
+    def str = new File(file).text
     Checker.checkAll(fileName, str)
     Parser parser = Parser.htmlParser()
     parser.settings(new ParseSettings(true, true)) // tag, attribute preserve case

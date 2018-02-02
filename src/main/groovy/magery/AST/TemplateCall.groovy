@@ -14,18 +14,10 @@ public class TemplateCall {
   }
 
   def attrValueToGroovy(attr){
-    if(attr.size() == 1){
-      if(attr[0] instanceof Variable) {
-
-        return "runtime.lookup(data, ${attr[0].path})"
-      } else {
-        return "\"${attr[0].text}\""
-      }
-    }
-    def parts =  attr.collect { part ->
+    attr
+    .collect { part ->
       if( part instanceof Variable){
         def quotedPath = part.path.collect { "\"$it\""}
-
         "runtime.lookup(data, ${quotedPath})"
       } else if(part instanceof Raw){
         "\"${part.text}\""
@@ -33,7 +25,8 @@ public class TemplateCall {
         "\"${part}\""
       }
     }
-    parts.grep({it != "\"\""}).join(" + ")
+    .grep({it != "\"\""})
+    .join(" + ")
   }
 
   List<String> toGroovy(){
@@ -48,7 +41,7 @@ public class TemplateCall {
     def contextAsString = context ?
     [ "[ \n",
       context.collect({ k, v ->
-        "$k: ${attrValueToGroovy(v)},\n"
+        "'$k': ${attrValueToGroovy(v)},\n"
       }),
       "],"
     ].flatten().join("") : "[:]"
