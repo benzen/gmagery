@@ -1,6 +1,6 @@
 package org.magery.AST
 
-import org.apache.commons.lang.StringEscapeUtils
+import org.apache.commons.lang3.StringEscapeUtils
 
 class Comment{
   def text

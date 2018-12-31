@@ -13,7 +13,7 @@ import org.magery.AST.Unless
 import org.magery.AST.Variable
 import org.magery.AST.Attributes
 import org.magery.AST.TemplateEmbed
-import org.apache.commons.lang.StringEscapeUtils
+import org.apache.commons.lang3.StringEscapeUtils
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.jsoup.nodes.Document
@@ -45,7 +45,7 @@ class Compiler{
         def end = str.indexOf("{{")
         end = end == -1 ? str.size() : end
         def chunk = str.substring(0, end).replace("}}", "")
-        return compileVariablesRec(str.substring(end, str.size()), !isText, [acc, new Raw(StringEscapeUtils.escapeHtml(chunk))])
+        return compileVariablesRec(str.substring(end, str.size()), !isText, [acc, new Raw(StringEscapeUtils.escapeXml(chunk))])
       } else {
         def end = str.indexOf("}}")
         end = end == -1 ? str.size() : end

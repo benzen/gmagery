@@ -98,6 +98,9 @@ class CompilerTest  extends GroovyTestCase {
        // "3022-variable-in-data-unless",
        // "3031-template-name-without-dash",
        "3041-overriding-a-template",
+       "4001-and-in-data-if",
+       "4002-or-in-data-if",
+       "4003-eq-in-data-if",
     ]
     .each {
       println "Testing $it"

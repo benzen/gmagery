@@ -1,6 +1,6 @@
 package org.magery
 
-import org.apache.commons.lang.StringEscapeUtils
+import org.apache.commons.lang3.StringEscapeUtils
 import groovy.json.JsonOutput
 
 class Runtime {
@@ -9,7 +9,7 @@ class Runtime {
         throw new Exception("Template \"$templateName\" is used but it's not defined")
     }
     templates[templateName].fn.call(templates, data, output, inner, embedData)
-    
+
   }
 
   def static renderToString(templates, templateName, data){
@@ -19,10 +19,10 @@ class Runtime {
   }
 
   def static escapeHtml(str){
-    StringEscapeUtils.escapeHtml(str)
+    StringEscapeUtils.escapeXml(str)
   }
   def static escapeHtmlButDoubleQuote(str){
-    StringEscapeUtils.escapeHtml(str).replaceAll("&quot;", "\"")
+    StringEscapeUtils.escapeXml(str).replaceAll("&quot;", "\"")
   }
 
 
@@ -35,9 +35,10 @@ class Runtime {
 
   def static lookup(data, path){
     if(path == null) { return null }
-    path.inject(data, {obj, prop ->
+    def result = path.inject(data, {obj, prop ->
       prop == "length" ? obj.size() : obj?."$prop"
    })
+   result == false ? null : result
   }
 
   def static each(data, name, path, fn){
