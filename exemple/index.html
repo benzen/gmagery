@@ -4,11 +4,20 @@ import groovy.json.JsonBuilder
 
 try{
   def templates = [:]
-  templates = Compiler.compileTemplates("public/templates/app-title.html", templates)
-  templates = Compiler.compileTemplates("public/templates/app-root.html", templates)
-  templates = Compiler.compileTemplates("public/templates/app-button.html", templates)
-  def state = [key: "value", title: "Sake", counter: 0]
+  templates += Compiler.compileTemplates("public/templates/app-title.html")
+  templates += Compiler.compileTemplates("public/templates/app-root.html")
+  templates += Compiler.compileTemplates("public/templates/app-button.html")
+  def state = [
+    "title": "All in one app",
+    "counter": 0,
+    "todos": [
+      [id: 1, name: "revennir à la maison", done: false]
+    ],
+    "show-done-todo": false,
+    "new-todo":""
+  ]
   def str = Runtime.renderToString(templates, "app-root", state)
+
   println """
   <html>
     <head>
@@ -31,6 +40,8 @@ try{
     </body>
   <html>
   """
+
 } catch (Exception e) {
+
   println "ERROR $e"
 }
