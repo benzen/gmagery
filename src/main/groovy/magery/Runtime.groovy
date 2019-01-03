@@ -6,7 +6,7 @@ import groovy.json.JsonOutput
 class Runtime {
   def static render(templates, templateName, data, output, inner = null, embedData = false){
     if(!templates[templateName]){
-        throw new Exception("Template \"$templateName\" is used but it's not defined")
+        throw new Exception("No such template \"$templateName\"")
     }
     templates[templateName].fn.call(templates, data, output, inner, embedData)
 

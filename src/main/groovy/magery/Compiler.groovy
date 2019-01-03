@@ -181,7 +181,8 @@ class Compiler{
     Checker.checkAll(fileName, str)
     Parser parser = Parser.htmlParser()
     parser.settings(new ParseSettings(true, true)) // tag, attribute preserve case
-    def tree = parser.parseInput(str, "").body().children()
+    def doc = parser.parse(str, "").outputSettings(new Document.OutputSettings().prettyPrint(false))
+    def tree = doc.body().children()
 
     compileTree(tree, output)
   }

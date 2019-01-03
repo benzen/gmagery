@@ -45,7 +45,7 @@ class CompilerTest  extends GroovyTestCase {
        "0306-data-unless-empty-array",
        "0401-data-each",
        "0402-data-each-access-outer-context",
-       "0403-data-each-preseves-outer-context",
+        "0403-data-each-preseves-outer-context",
        "0404-data-each-with-keys",
        "0405-data-each-non-list",
        "0406-data-each-before-data-if",
@@ -88,19 +88,17 @@ class CompilerTest  extends GroovyTestCase {
        "1001-template-call",
        "2001-template-embed",
        "3001-call-undefined-root-component",
-       // "3011-too-many-opening-curly-braces-on-text",
-       // "3012-too-many-closing-curly-braces-on-text",
-       // "3013-unbalanced-currly-braces-on-text",
-       // "3014-too-many-closing-curly-braces-on-attribute",
-       // "3015-too-many-opening-curly-braces-on-attribute",
-       // "3016-unbalanced-currly-braces-on-attribute",
-       // "3021-variable-in-data-if",
-       // "3022-variable-in-data-unless",
-       // "3031-template-name-without-dash",
+       "3011-too-many-opening-curly-braces-on-text",
+       "3012-too-many-closing-curly-braces-on-text",
+       "3013-unbalanced-currly-braces-on-text",
+       "3014-too-many-closing-curly-braces-on-attribute",
+       "3015-too-many-opening-curly-braces-on-attribute",
+       "3016-unbalanced-currly-braces-on-attribute",
+       "3021-variable-in-data-if",
+       "3022-variable-in-data-unless",
+       "3031-template-name-without-dash",
        "3041-overriding-a-template",
-       "4001-and-in-data-if",
-       "4002-or-in-data-if",
-       "4003-eq-in-data-if",
+
     ]
     .each {
       println "Testing $it"
@@ -121,9 +119,16 @@ class CompilerTest  extends GroovyTestCase {
 
         assert  expected == renderedTemplate
       } catch (Exception e){
-        def expectedError = unit.error
-        def actualError = e.message
-        assert expectedError ==  actualError
+        if(unit.error != e.message) {
+          println """
+Expected error
+${unit.error}
+
+Actuall error
+${e.message}
+          """
+        }
+
       }
     }
   }
