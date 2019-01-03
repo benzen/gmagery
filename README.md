@@ -13,14 +13,14 @@ whitespace
 
 Using Grab for the groovy-peoples
 
-    @Grab(group='org.magery', module='groovy-magery', version='0.1'),
+    @Grab(group='org.magery', module='groovy-magery', version='0.2'),
 
 Using maven for the standard folks
 
     <dependency>
       <groupId>org.magery</groupId>
       <artifactId>groovy-magery</artifactId>
-      <version>0.1</version>
+      <version>0.2</version>
     </dependency>
 
 
