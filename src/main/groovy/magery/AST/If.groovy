@@ -1,22 +1,25 @@
 package org.magery.AST
 
+import org.code3.simpleELParser.Compiler
+import org.magery.ExpressionCodeGenerator
+
 public class If {
-  def path
+  def ast
   def children
   If(value){
-    def trimmedValue = value.trim()
-    this.path = trimmedValue.tokenize(".")
+    this.ast = new Compiler().compile(value)
     this.children = []
   }
   def push(node){
     this.children.push(node)
   }
   List<String> toGroovy(){
-    def quotedPath = path.collect {"\"$it\""}
+    def code = new ExpressionCodeGenerator().generateCode(this.ast)
     [
-      "if(runtime.lookup(data, $quotedPath)){\n",
+      "if($code){\n",
       children.collect({it.toGroovy()}),
       "}\n",
     ]
   }
+
 }

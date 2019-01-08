@@ -24,12 +24,17 @@
         <artifactId>groovy-all</artifactId>
         <version>2.4.13</version>
     </dependency>
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>3.8.2</version>
-        <scope>test</scope>
-      </dependency>
+    <dependency>
+      <groupId>org.code3</groupId>
+      <artifactId>groovy-simple-el-parser</artifactId>
+      <version>0.3</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
       <plugins>

@@ -1,5 +1,6 @@
 package org.magery.AST
 
+
 public class Variable {
   def path
   Variable(path){

@@ -9,6 +9,7 @@ class CompilerTest  extends GroovyTestCase {
     getClass().getResource(pathInClassPath).file
   }
   void testAll(){
+
     def tests = [
        "0001-empty-template",
        "0002-flat-children",
@@ -43,9 +44,29 @@ class CompilerTest  extends GroovyTestCase {
        "0304-data-unless-zero",
        "0305-data-unless-empty-string",
        "0306-data-unless-empty-array",
+       "0310-data-if-dotted-path",
+       "0311-data-if-eq",
+       "0312-data-if-neq",
+       "0313-data-if-or",
+       "0314-data-if-and",
+       "0315-data-if-lt",
+       "0316-data-if-lte",
+       "0317-data-if-gt",
+       "0318-data-if-gte",
+       "0319-data-if-complexe-expression",
+       "0320-data-unless-dotted-path",
+       "0321-data-unless-eq",
+       "0322-data-unless-neq",
+       "0323-data-unless-or",
+       "0324-data-unless-and",
+       "0325-data-unless-lt",
+       "0326-data-unless-lte",
+       "0327-data-unless-gt",
+       "0328-data-unless-gte",
+       "0329-data-unless-complexe-expression",
        "0401-data-each",
        "0402-data-each-access-outer-context",
-        "0403-data-each-preseves-outer-context",
+       "0403-data-each-preseves-outer-context",
        "0404-data-each-with-keys",
        "0405-data-each-non-list",
        "0406-data-each-before-data-if",
@@ -99,6 +120,7 @@ class CompilerTest  extends GroovyTestCase {
        "3031-template-name-without-dash",
        "3041-overriding-a-template",
 
+
     ]
     .each {
       println "Testing $it"
@@ -119,14 +141,57 @@ class CompilerTest  extends GroovyTestCase {
 
         assert  expected == renderedTemplate
       } catch (Exception e){
-        if(unit.error != e.message) {
-          println """
-Expected error
-${unit.error}
+        def alternateErrorMessage = [
+          "3011-too-many-opening-curly-braces-on-text": """
+In file: /magery-tests/components/3011-too-many-opening-curly-braces-on-text/template.html
+At line: 0
+Variables should be escape between "{{" and "}}"
+<template data-tagname="app-main">{{ def</template>
+                                  ^^^^^^
+          """,
+          "3012-too-many-closing-curly-braces-on-text":"""
+In file: /magery-tests/components/3012-too-many-closing-curly-braces-on-text/template.html
+At line: 0
+Variables should be escape between "{{" and "}}"
+<template data-tagname="app-main">def }}</template>
+                                  ^^^^^^
+          """,
+          "3013-unbalanced-currly-braces-on-text":"""
+In file: /magery-tests/components/3013-unbalanced-currly-braces-on-text/template.html
+At line: 0
+Variables should be escape between "{{" and "}}"
+<template data-tagname="app-main">}} def {{</template>
+                                  ^^
+          """,
+          "3014-too-many-closing-curly-braces-on-attribute":"""
+In file: /magery-tests/components/3014-too-many-closing-curly-braces-on-attribute/template.html
+At line: 1
+Variables should be escape between "{{" and "}}"
+  <a href="{{ def">link</a>
+           ^^^^^^
+          """,
+          "3015-too-many-opening-curly-braces-on-attribute":"""
+In file: /magery-tests/components/3015-too-many-opening-curly-braces-on-attribute/template.html
+At line: 1
+Variables should be escape between "{{" and "}}"
+  <a href="def }}">link</a>
+           ^^^^^^
+         """,
+         "3016-unbalanced-currly-braces-on-attribute":"""
+In file: /magery-tests/components/3016-unbalanced-currly-braces-on-attribute/template.html
+At line: 1
+Variables should be escape between "{{" and "}}"
+  <a href="}} def {{"> link </a>
+                  ^^
 
+         """
+        ]
+        if(unit.error != e.message && alternateErrorMessage[it]?.trim() != e.message?.trim()) {
+          println """
 Actuall error
 ${e.message}
           """
+          // e.printStackTrace()
         }
 
       }
