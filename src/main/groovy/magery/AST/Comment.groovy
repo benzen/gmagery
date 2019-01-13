@@ -11,6 +11,6 @@ class Comment{
 
   List<String> toGroovy(){
     text = StringEscapeUtils.escapeJava(text)
-    ["output.push(\"<!--$text-->\")\n"]
+    ["output << \"<!--$text-->\"\n"]
   }
 }

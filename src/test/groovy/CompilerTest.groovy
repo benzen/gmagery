@@ -8,6 +8,7 @@ class CompilerTest  extends GroovyTestCase {
   def getFile(pathInClassPath){
     getClass().getResource(pathInClassPath).file
   }
+
   void testAll(){
 
     def tests = [
@@ -127,7 +128,7 @@ class CompilerTest  extends GroovyTestCase {
       def unit = [
         test: it,
         error: new File(getFile("/magery-tests/components/$it/error.txt")).text.trim(),
-        template: "/magery-tests/components/$it/template.html",
+        template: new File(getFile("/magery-tests/components/$it/template.html")),
         expected: new File(getFile("/magery-tests/components/$it/expected.html")).text.trim(),
         data: new JsonSlurper().parseText(new File(getFile("/magery-tests/components/$it/data.json")).text.trim())
       ]
@@ -141,57 +142,81 @@ class CompilerTest  extends GroovyTestCase {
 
         assert  expected == renderedTemplate
       } catch (Exception e){
+        def path = getClass().protectionDomain.codeSource.location.path
         def alternateErrorMessage = [
           "3011-too-many-opening-curly-braces-on-text": """
-In file: /magery-tests/components/3011-too-many-opening-curly-braces-on-text/template.html
+In file: ${path}magery-tests/components/3011-too-many-opening-curly-braces-on-text/template.html
 At line: 0
 Variables should be escape between "{{" and "}}"
 <template data-tagname="app-main">{{ def</template>
                                   ^^^^^^
           """,
           "3012-too-many-closing-curly-braces-on-text":"""
-In file: /magery-tests/components/3012-too-many-closing-curly-braces-on-text/template.html
+In file: ${path}magery-tests/components/3012-too-many-closing-curly-braces-on-text/template.html
 At line: 0
 Variables should be escape between "{{" and "}}"
 <template data-tagname="app-main">def }}</template>
                                   ^^^^^^
           """,
           "3013-unbalanced-currly-braces-on-text":"""
-In file: /magery-tests/components/3013-unbalanced-currly-braces-on-text/template.html
+In file: ${path}magery-tests/components/3013-unbalanced-currly-braces-on-text/template.html
 At line: 0
 Variables should be escape between "{{" and "}}"
 <template data-tagname="app-main">}} def {{</template>
                                   ^^
           """,
           "3014-too-many-closing-curly-braces-on-attribute":"""
-In file: /magery-tests/components/3014-too-many-closing-curly-braces-on-attribute/template.html
+In file: ${path}magery-tests/components/3014-too-many-closing-curly-braces-on-attribute/template.html
 At line: 1
 Variables should be escape between "{{" and "}}"
   <a href="{{ def">link</a>
            ^^^^^^
           """,
           "3015-too-many-opening-curly-braces-on-attribute":"""
-In file: /magery-tests/components/3015-too-many-opening-curly-braces-on-attribute/template.html
+In file: ${path}magery-tests/components/3015-too-many-opening-curly-braces-on-attribute/template.html
 At line: 1
 Variables should be escape between "{{" and "}}"
   <a href="def }}">link</a>
            ^^^^^^
          """,
          "3016-unbalanced-currly-braces-on-attribute":"""
-In file: /magery-tests/components/3016-unbalanced-currly-braces-on-attribute/template.html
+In file: ${path}magery-tests/components/3016-unbalanced-currly-braces-on-attribute/template.html
 At line: 1
 Variables should be escape between "{{" and "}}"
   <a href="}} def {{"> link </a>
                   ^^
-
-         """
+         """,
+         "3021-variable-in-data-if":"""
+In file: ${path}magery-tests/components/3021-variable-in-data-if/template.html
+At line: 1
+Value for attribute data-if must not contains "{{" or "}}"
+  <a data-if="{{ value }}"> link </a>
+              ^^^^^^^^^^^
+            """,
+            "3022-variable-in-data-unless":"""
+In file: ${path}magery-tests/components/3022-variable-in-data-unless/template.html
+At line: 1
+Value for attribute data-unless must not contains "{{" or "}}"
+  <a data-unless="{{ value }}"> link </a>
+                  ^^^^^^^^^^^
+            """,
+            "3031-template-name-without-dash":"""
+In file: ${path}magery-tests/components/3031-template-name-without-dash/template.html
+At line: 0
+Template name "app" is incorrect, it's mandatory that template name include a "-" character
+<template data-tagname="app">
+                        ^^^
+            """
         ]
         if(unit.error != e.message && alternateErrorMessage[it]?.trim() != e.message?.trim()) {
-          println """
+          def msg = """
 Actuall error
 ${e.message}
+Expected error
+${alternateErrorMessage[it]?.trim()}
           """
-          // e.printStackTrace()
+          e.printStackTrace()
+          throw new Exception(msg)
         }
 
       }

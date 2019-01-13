@@ -7,44 +7,35 @@
 
   <hr>
 
-  <show-done-todos show-done-todos="{{show-done-todos}}"></show-done-todos>
-  <todo-list todos="{{todos}}" show-done-todos="{{show-done-todos}}"></todo-list>
-  <todo-input new-todo="{{new-todo}}"></todo-input>
+  <show-done-todos showdonetodos="{{showdonetodos}}"></show-done-todos>
+  <todo-list todos="{{todos}}" showdonetodos="{{showdonetodos}}"></todo-list>
+  <todo-input newtodo={{newtodo}}></todo-input>
 
 </template>
 
-
 <template data-tagname="todo-list">
   <ul>
-    <todo-entry  todo="{{todo}}" show-done-todos="{{show-done-todos}}" data-each="todo in todos">
+    <todo-entry  todo="{{todo}}" showdonetodos="{{showdonetodos}}" data-each="todo in todos">
     </todo-entry>
   </ul>
 
 </template>
 
 <template data-tagname="todo-entry">
-  <span data-if="todo.done">
-    <span data-if="show-done-todos">
-      <li>
-        <p style="text-decoration: line-through" onclick="toggleDone(todo.id)" >
-          {{todo.name}}
-        </p>
-      </li>
-    </span>
-  </span>
-  <li data-unless="todo.done">
-    <p onclick="toggleDone(todo.id)" >
-      {{todo.name}}
-    </p>
+  <li data-unless="todo.done" onclick="toggleDone(todo.id)" >
+    {{todo.name}}
+  </li>
+  <li data-if="todo.done && showdonetodos" onclick="toggleDone(todo.id)" >
+    {{todo.name}}
   </li>
 </template>
 
 <template data-tagname="todo-input">
-  <input type="text" value="{{new-todo}}" oninput="changeNewInput(event)" onkeydown="saveNewTodo(event)"/>
+  <input type="text" value="{{newtodo}}" oninput="changeNewInput(event)" onkeydown="saveNewTodo(event)"/>
 </template>
 
 <template data-tagname="show-done-todos">
   <label>Show done todo ?
-    <input type="checkbox" value="{{show-done-todos}}" onclick="toggleShowDoneTodos()"/>
+    <input type="checkbox" checked="{{showdonetodos}}" onclick="toggleShowDoneTodos()"/>
   </label>
 </template>

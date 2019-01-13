@@ -3,18 +3,24 @@ import org.magery.Runtime
 import groovy.json.JsonBuilder
 
 try{
+
   def templates = [:]
-  templates += Compiler.compileTemplates("public/templates/app-title.html")
-  templates += Compiler.compileTemplates("public/templates/app-root.html")
-  templates += Compiler.compileTemplates("public/templates/app-button.html")
+
+  //System.out.println Compiler.compileToString(new File("public/templates/app-root.html"))
+  Compiler.compileTemplates(new File("public/templates/app-root.html"), templates)
+  Compiler.compileTemplates(new File("public/templates/app-title.html"), templates)
+  Compiler.compileTemplates(new File("public/templates/app-button.html"), templates)
+
+
   def state = [
     "title": "All in one app",
     "counter": 0,
     "todos": [
-      [id: 1, name: "revennir à la maison", done: false]
+      [id: 1, name: "revennir à la maison", done: false],
+      [id: 2, name: "Taguer un mur", done: true],
     ],
-    "show-done-todo": false,
-    "new-todo":""
+    "showdonetodos": true,
+    "newtodo":"def"
   ]
   def str = Runtime.renderToString(templates, "app-root", state)
 
@@ -29,6 +35,7 @@ try{
       <script src="/js/magery-runtime.js" type="text/javascript"></script>
     </head>
     <body>
+      <!-- <app-root></app-root> -->
       $str
       <script type="text/javascript">
         window.APP = {
@@ -37,11 +44,12 @@ try{
       </script>
       <script src="/js/app.js" type="text/javascript"></script>
 
+
     </body>
   <html>
   """
 
 } catch (Exception e) {
-
+  e.printStackTrace()
   println "ERROR $e"
 }

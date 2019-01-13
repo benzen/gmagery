@@ -19,9 +19,7 @@ class Attributes{
         if(it.value ==~ /\{\{.*\}\}/){
           def rawPath = it.value.substring(2, it.value.size() - 2).trim()
           if(rawPath){
-            def ifOutput = new If(rawPath)
-            ifOutput.push(new Raw(" ${Runtime.escapeHtml(it.key)}"))
-            return [ifOutput]
+            return [new If(rawPath, [new Raw(" ${Runtime.escapeHtml(it.key)}")])]
           }
         }
         return [new Raw(" ${Runtime.escapeHtml(it.key)}")]

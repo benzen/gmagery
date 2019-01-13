@@ -5,14 +5,10 @@ public class Template {
   def src
   def children
 
-  Template(name, src){
+  Template(name, src, children = []){
     this.name = name
     this.src = src
-    children = []
-  }
-
-  def push(o){
-    children.push(o)
+    this.children = children
   }
 
   List<String> toGroovy(){

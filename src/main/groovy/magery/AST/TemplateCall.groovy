@@ -47,15 +47,10 @@ public class TemplateCall {
     ].flatten().join("") : "[:]"
     def inner = hasChildren ? "fn_$id" : "inner"
 
-
     childrenFn + [
       "runtime.render(templates, ${attrValueToGroovy(this.name)}, $contextAsString, output, $inner, ${embededData})\n",
     ]
 
-  }
-
-  def push(node){
-    this.children.push(node)
   }
 
 }

@@ -3,8 +3,8 @@ const components = MageryCompiler.compile('template')
 //window.APP.initialState is defined in index.html
 const initialState = window.APP.initialState
 
-const increment = (state, action) => Object.assign({}, state, {counter: state.counter + 1})
-const decrement = (state, action) => Object.assign({}, state, {counter: state.counter - 1})
+const increment = (state, action) => {return {...state, counter: state.counter + 1}}
+const decrement = (state, action) => {return {...state, counter: state.counter - 1}}
 const toggleDone = (state, action) => {
   const newTodos = state.todos.slice(0)
   const index = newTodos.findIndex( (item) => item.id == action.todoId )
@@ -13,18 +13,32 @@ const toggleDone = (state, action) => {
   newTodos[index] = newTodo
   return Object.assign({}, state, {todos: newTodos})
 }
-const changeNewInput = (state, action) => Object.assign({}, state, {"new-todo": event.target.value})
+const changeNewInput = (state, action) => {
+  return {
+    ...state,
+    "newtodo": action.event.target.value
+  }
+}
 const saveNewTodo = (state, action) => {
   const newTodo = {
-    name: state["new-todo"],
+    name: state["newtodo"],
     done: false,
     id: state.todos.length + 1
    }
-   const newTodos = state.todos.slice(0)
-   newTodos.push(newTodo)
-   return Object.assign({}, state, {todos: newTodos, "new-todo": ""})
+   const newState = {
+     ...state,
+     todos: [...state.todos, newTodo],
+     "newtodo":""
+   }
+   return newState
 }
-const toggleShowDoneTodos = (state, action) => Object.assign({}, state, {"show-done-todos": !state["show-done-todos"]})
+const toggleShowDoneTodos = (state, action) => {
+  return {
+    ...state,
+    "showdonetodos": !state.showdonetodos
+  }
+}
+
 const reducer = (state, action) => {
   switch (action.type) {
    case 'increment': return increment(state, action)
@@ -40,7 +54,9 @@ const store = Redux.createStore(function (state, action) {
     if (typeof state === 'undefined') {
       return initialState
     }
-    return reducer(state, action)
+    const newState = reducer(state, action)
+    console.log(newState)
+    return newState
  });
 
  var target = document.querySelector('app-root')

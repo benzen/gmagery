@@ -10,7 +10,7 @@ public class Raw {
 
   List<String> toGroovy(){
     text = StringEscapeUtils.escapeJava(text)
-    ["output.push(\"${text}\")\n"]
+    ["output << \"${text}\"\n"]
   }
 
 }

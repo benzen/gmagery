@@ -15,7 +15,7 @@ class Runtime {
   def static renderToString(templates, templateName, data){
     def output = []
     render(templates, templateName, data, output)
-    output.join('').toString()
+    output.join('')
   }
 
   def static escapeHtml(str){

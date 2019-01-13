@@ -7,11 +7,12 @@ import org.magery.Compiler
 
 @GrabConfig(systemClassLoader= true)
 @Grapes([
-  @Grab(group='org.magery', module='groovy-magery', version='0.1'),
+  @Grab(group='org.magery', module='groovy-magery', version='0.4'),
   @Grab(group='org.eclipse.jetty.aggregate', module='jetty-all', version='7.6.15.v20140411')])
 
 def startJetty() {
-    def server = new Server(9090)
+    def port = 9090
+    def server = new Server(port)
 
     def handler = new ServletContextHandler(ServletContextHandler.SESSIONS)
     handler.contextPath = '/'
@@ -22,7 +23,7 @@ def startJetty() {
 
     server.handler = handler
     server.start()
-    println "Open browser on http://localhost:9090/index.html"
+    println "Open browser on http://localhost:$port/index.html"
 }
 
 println "Starting Jetty, press Ctrl+C to stop."

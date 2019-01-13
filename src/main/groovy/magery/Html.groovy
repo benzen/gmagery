@@ -8,6 +8,7 @@ class Html {
     "data-each",
     "data-key"
   ]
+  
   def static BOOLEAN_ATTRIBUTES = [
     "allowfullscreen",
     "async",
@@ -33,6 +34,7 @@ class Html {
     "reversed",
     "selected"
   ]
+
   def static SELF_CLOSING_TAGS = [
     "area",
     "base",

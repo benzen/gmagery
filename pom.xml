@@ -6,7 +6,7 @@
 
   <groupId>org.magery</groupId>
   <artifactId>groovy-magery</artifactId>
-  <version>0.2</version>
+  <version>0.4</version>
   <packaging>jar</packaging>
   <dependencies>
     <dependency>
@@ -27,7 +27,7 @@
     <dependency>
       <groupId>org.code3</groupId>
       <artifactId>groovy-simple-el-parser</artifactId>
-      <version>0.3</version>
+      <version>0.5</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

@@ -20,23 +20,29 @@ import org.jsoup.nodes.Document
 import org.jsoup.parser.ParseSettings
 
 class Compiler{
-  def static compileNode(node, output, queue, isRoot){
-    if(node instanceof org.jsoup.nodes.TextNode){
-      compileTextNode(node, output)
-    } else if (node instanceof org.jsoup.nodes.Comment){
-      compileComment(node, output)
-    } else if(node instanceof org.jsoup.select.Elements){
-      node.each { compileNode(it, output, queue, isRoot)}
-    } else if (node  instanceof org.jsoup.nodes.Element) {
-      compileElement(node, output, queue, isRoot)
-    } else{
-      throw new Exception("Unhandeled node type ${node.class} ${node.tagName}")
+
+  def static compileNode(node, isRoot) {
+    if (node instanceof org.jsoup.select.Elements){
+      node.collect({ compileNode(it, isRoot) })
+    } else if (node instanceof org.jsoup.nodes.Element){
+      compileElment(node, isRoot)
+    } else if (node instanceof org.jsoup.nodes.TextNode) {
+      compileText(node)
+    } else if (node instanceof org.jsoup.nodes.Comment) {
+      compileComment(node)
+    } else {
+      throw new RuntimeException("Unkown node type ${node.class}")
     }
   }
-
-  def static compileComment(node, output){
-    output.push(new Comment(node.data))
+  def static compileText(node) {
+    def text = node.wholeText
+    compileVariables(text)
   }
+
+  def static compileComment(node) {
+    [new Comment(node.data)]
+  }
+
   def static compileVariables(text){
     def compileVariablesRec
     compileVariablesRec = {str, isText, acc ->
@@ -56,85 +62,96 @@ class Compiler{
     compileVariablesRec(text, true, [])
   }
 
+  def static compileElment(node, isRoot){
+    def tagname = node.tagName()  == "template" ?  node.attr("data-tagname") : node.tagName()
+    def compileAll =
+      compileUnless(node, tagname) >>
+      compileIf(node, tagname) >>
+      compileEach(node, tagname) >>
+      compileTemplate(node, tagname, isRoot) >>
+      compileTemplateEmbed(node, tagname) >>
+      compileTemplateChildren(node, tagname)
 
-  def static compileTextNode(node, output){
-    def text = node.wholeText
-    def vOuput = compileVariables(text)
-    vOuput.each {
-      output.push(it)
+    compileAll node.tagName().contains("-") ? compileTemplateCall(node, tagname, isRoot) : compileHtml(node, tagname, isRoot)
+  }
+
+  def static compileTemplateChildren(node, tagname){
+    { children ->
+      if(tagname != "template-children") {return children}
+      [new TemplateChildren()]
     }
   }
-  def static compileElement(node, output, queue, isRoot){
-    def tagName = node.tagName().toLowerCase()
-    def isComponent = false
-    if(tagName == "template"){
+
+  def static compileTemplateEmbed(node, tagname){
+    { children ->
+      if(tagname != "template-embed"){ return children }
+      [new TemplateEmbed(node.attr("template"))]
+    }
+  }
+
+  def static compileTemplate(node, tagname, isRoot){
+    { children ->
+      if(node.tagName() != "template"){ return children }
       if(!isRoot){
-        queue.push(node)
-        return
+
+        [children, compileNode(node, true)]
       }
-      isComponent = true
-      tagName = node.attr("data-tagname").toLowerCase()
-    }
+      new Template(tagname, node.toString(), children)
 
-    if(tagName == "template-children"){
-      output.push(new TemplateChildren())
-      return
     }
-    else if ( tagName == "template-embed"){
-      output.push(new TemplateEmbed(node.attr("template")))
-      return
-    }
-    if(node.hasAttr("data-each")){
-      def eachOutput = new Each(node.attr("data-each"))
-      output.push(eachOutput)
-      output = eachOutput
-    }
-    if(node.hasAttr("data-if")){
-      def ifOutput = new If(node.attr("data-if"))
-      output.push(ifOutput)
-      output = ifOutput
-    }
-    if(node.hasAttr("data-unless")){
-      def unlessOutput = new Unless(node.attr("data-unless"))
-      output.push(unlessOutput)
-      output = unlessOutput
-    }
-
-    if(node.tagName().contains("-")){
-
-      def context = attributesToContext(node.attributes())
-      def templateName = [new Raw(tagName)]
-      if(tagName == "template-call"){
-        def templateRaw = node.attr("template")
-        templateName = compileVariables(templateRaw)
-      }
-      def embedData = node.attr("data-embed") == "true"
-      def templateOutput = new TemplateCall(templateName, context, embedData)
-      output.push(templateOutput)
-      node.childNodes().each { childNode ->
-        compileNode(childNode, templateOutput, queue, false)
-      }
-      return
-    }
-
-    output.push(new Raw("<$tagName"))
-    output.push(new Attributes(node.attributes()))
-
-    if(isComponent &&  node.attr("data-embed") != "true"){
-      output.push(new ConditionalDataEmbed())
-    }
-
-    output.push(new Raw(">"))
-    if(!Html.SELF_CLOSING_TAGS.contains(tagName) ){
-      node.childNodes().each {
-        compileNode(it, output, queue, false)
-
-      }
-      output.push(new Raw("</$tagName>"))
-    }
-
   }
-  static def attributesToContext(attributes){
+
+  def static compileEach(node, tagname){
+    { children ->
+      if(!node.hasAttr("data-each")) { return children }
+      new Each(node.attr("data-each"), children)
+    }
+  }
+
+  def static compileIf(node, tagname){
+    { children ->
+      if(!node.hasAttr("data-if")) { return children }
+      new If(node.attr("data-if"), children)
+    }
+  }
+
+  def static compileUnless(node, tagname){
+    { children ->
+      if(!node.hasAttr("data-unless")) { return children }
+      new Unless(node.attr("data-unless"), children)
+    }
+  }
+
+  def static compileHtml(node, tagname, isRoot){
+    [
+      new Raw("<$tagname"),
+      new Attributes(node.attributes()),
+      (node.tagName() == "template" &&  node.attr("data-embed") != "true") ?  new ConditionalDataEmbed() : new Raw(""),
+      new Raw(">"),
+      Html.SELF_CLOSING_TAGS.contains(tagname) ? new Raw("") : [
+        node.childNodes().collect({compileNode(it, false)}),
+        new Raw("</$tagname>"),
+        ]
+    ].flatten()
+  }
+
+  def static compileTemplateCall(node, tagname, isRoot){
+
+    def context = attributesToContext(node.attributes())
+    def templateName = [new Raw(tagname)]
+
+    if(node.tagName() == "template-call"){
+      def templateRaw = node.attr("template")
+      templateName = compileVariables(templateRaw)
+    }
+
+    def embedData = node.attr("data-embed") == "true"
+    def template_node = new TemplateCall(templateName, context, embedData)
+    template_node.children = node.childNodes().collect( { childNode -> compileNode(childNode, false) }).flatten()
+    template_node
+  }
+
+  def static attributesToContext(attributes){
     def context = attributes
      .findAll({!Html.IGNORED_ATTRIBUTES.contains(it.key)})
      .findAll({it.key.substring(0, 2) != "on"})
@@ -151,59 +168,38 @@ class Compiler{
   }
 
   static boolean containsUpperCase(str){
-    def upperCasedChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
-    upperCasedChar.any({ str.contains(it) })
+    str ==~ /.*[A-Z]+.+/
   }
 
-  def static compileTree(tree, output){
-    def queue = []
-    compileNode(tree, output, queue, false)
-    while(queue.size() > 0){
-      def node = queue.first()
-      queue = queue.minus(node)
-      def templateName = node.attr("data-tagname")
-      def template = new Template(templateName, outerHtml(node))
-      compileNode(node, template, queue, true)
-      output.push(template)
-    }
+  def static compileTree(tree){
+    compileNode(tree, false).flatten()
   }
 
-  def static writeNode(node){
-    node.toString()
-  }
-  def static outerHtml(node){
-    writeNode(node)
-  }
-
-  def static compileFile(fileName, output){
-    def file = getClass().getResource(fileName).file
-    def str = new File(file).text
-    Checker.checkAll(fileName, str)
+  def static compileFile(file){
+    def str = file.text
+    Checker.checkAll(file.path, str)
     Parser parser = Parser.htmlParser()
     parser.settings(new ParseSettings(true, true)) // tag, attribute preserve case
     def doc = parser.parse(str, "").outputSettings(new Document.OutputSettings().prettyPrint(false))
     def tree = doc.body().children()
 
-    compileTree(tree, output)
+    compileTree(tree)
   }
 
-  def static compileToString(fileName){
-    def output = []
-    compileFile(fileName, output)
-
-    output
+  def static compileToString(file){
+    compileFile(file)
+    .flatten()
     .collect({it.toGroovy()})
     .flatten()
     .join("")
     .toString()
   }
 
-  def static compileTemplates(fileName, templates = [:]){
-    def src = compileToString(fileName)
+  def static compileTemplates(File file, templates = [:]){
+    def src = compileToString(file)
     def binding = new Binding([templates: templates, runtime: Runtime])
     def gs = new GroovyShell(binding)
     gs.evaluate(src)
     templates
   }
-
 }

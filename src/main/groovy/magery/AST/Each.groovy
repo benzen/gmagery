@@ -4,19 +4,17 @@ public class Each {
   def name
   def path
   def children
-  Each(value){
-    
+  Each(value, children = []){
+
     def parts = value.split(" in ")
     def name = parts[0]
     def path = parts[1].trim().tokenize(".")
-    
+
     this.name = name
     this.path = path
-    children = []
+    this.children = children
   }
-  def push(o){
-    this.children.push(o)
-  }
+
   List<String> toGroovy(){
     def id = UUID.randomUUID().toString().replace("-", "_")
     def quotedPath = path.collect { "\"$it\"" }
